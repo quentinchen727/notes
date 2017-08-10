@@ -118,24 +118,24 @@ Has-A can be better than a IS-A.
 
     - Design Principle: A class should have only one reason to change.
 
-# Desing Pattern:
+# Design Pattern:
     - Strategy(algorithms): defines a family of algorithms, encasulates each one, and makes
-them interchangable. Strategy lets the algorithms vary independently from clients
-That use it.
-    Duck: quackBehavior, flyBehavior, performQuack(), performFly(),
-          setQuackBehavior(), setFlyBehavior()
-      MallardDuck extends Duck, gets Behavior instance in constructors.
-    QuackBehavior interface: quack()
-    FlyBehaviro interface: fly()
-    Quack, Squeak, MuteQuack implement QuackBehavior;
-    FlyWithWing and FlyWithoutWing implement FlyBehavior.
+        them interchangable. Strategy lets the algorithms vary independently from clients
+        that use it.
+        Duck: quackBehavior, flyBehavior, performQuack(), performFly(),
+            setQuackBehavior(), setFlyBehavior()
+        MallardDuck extends Duck, gets Behavior instance in constructors.
+        QuackBehavior interface: quack()
+        FlyBehaviro interface: fly()
+        Quack, Squeak, MuteQuack implement QuackBehavior;
+        FlyWithWing and FlyWithoutWing implement FlyBehavior.
 
     - Observer: defines a one-to-many dependency between objects so that when one
-object changes state, all of its dependencts are notified and updated automatically.
-    Subject<interface>: registerObserver(), removeObserver(), notifyObserver();
-    ConcreteSubject: registerObserver(), removeObserver(), notifyObserver(), getState(), setState()
-    Observer<interface>: update()
-    ConcreteObserver: update()
+        object changes state, all of its dependencts are notified and updated automatically.
+        Subject<interface>: registerObserver(), removeObserver(), notifyObserver();
+        ConcreteSubject: registerObserver(), removeObserver(), notifyObserver(), getState(), setState()
+        Observer<interface>: update()
+        ConcreteObserver: update()
 
     - Decorator: attaches additional responsiblities to an object dynamically. Decorators
             provide a flexible alternative to subclassing for extending functionality.
