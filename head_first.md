@@ -3,13 +3,13 @@ Pay attention to how you pay attention.
 ## 1. Introduction to design pattern
     Instead of code resue, with patterns you get experience reuse.
     Design pattern helps to structure our application and communicate more with each other
-using less words.
+    using less words.
     OO basics: Abstraction, Encapsulation, Polymorphism, and Inheritance.
     Good OO desings are resuable, extensible and maintainable.
 
 ## 2. The Observer Pattern: Keeping your Objects in the konw
     Strive for loosely coupled designs between objects that interact. When two objects are loosely coupled, they can interact, but have
-very little knowledge of each other.
+    very little knowledge of each other.
     Java has built-in support for Observer pattern:
         - Observer<interface>: void update(Observable o, Object arg): if arg == null, pull; else push
         - Observable<class>: addObserver(Observer o); clearChanged(); countObservers();
