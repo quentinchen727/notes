@@ -15,7 +15,7 @@ very little knowledge of each other.
         - Observable<class>: addObserver(Observer o); clearChanged(); countObservers();
                              deleteObserver(Object o); deleteObservers(); hasChanged();
                              notifyObservers(); notifyObservers(Object arg); setChanged()
-                setChanged() is protected and means it cann't be called in non-package
+                setChanged() is protected and means it cannot be called in non-package
                     non-subclass, which implies composition is not viable.
     Observer pattern is heavily used in GUI frameworks and other places, including JavaBeans
         and RMI.
@@ -79,7 +79,7 @@ very little knowledge of each other.
         functions, and we say it has low cohsesion when it is designed around a set of
         unrelated functions.
 
-#Design Principle:
+# Design Principle:
    - Encapsulate what varies. Identify the aspects of your application that vary
 and separate them from what stays the same. That is the basis for almost every design pattern.
 
@@ -118,7 +118,7 @@ Has-A can be better than a IS-A.
 
     - Design Principle: A class should have only one reason to change.
 
-#Desing Pattern:
+# Desing Pattern:
     - Strategy(algorithms): defines a family of algorithms, encasulates each one, and makes
 them interchangable. Strategy lets the algorithms vary independently from clients
 That use it.
