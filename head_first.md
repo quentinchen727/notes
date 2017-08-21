@@ -78,6 +78,68 @@ Pay attention to how you pay attention.
     Cohesion: a module or class has high cohesion when it is designed around a set of related
         functions, and we say it has low cohsesion when it is designed around a set of
         unrelated functions.
+    Tradeoff: observer vs violate Design Principles; balance transparency and safety.
+    NullIterator.
+
+## 10. The State Pattern: The State of Things
+
+## 11. The Proxy Pattern: Controlling Object Access
+    A remote proxy acts as a local representive to a remote object.
+    RMI: remote method invocation.
+    RMI Nonmenclature: in RMI, the client helper is a 'stub' and the service helper is a 'skeleton'.
+    Dynamic class downloading: With it, serialized objects (like the stub) are "stamped"
+        with a URL that tells the RMI system on the client where to find the class file for that object.
+    "transient" tells the JVM not to serialize this field.
+    A remote proxy controls access to a remote object;
+    A virtual proxy controls access to a resource that is expensive to create.
+    A protection proxy controls access to a resource based on access rights.
+    java.lang.reflect: create a proxy class on the fly, which is a dynamic proxy.
+    Firewall Proxy, Smart Reference Proxy, Caching Proxy, Complexity Hiding Proxy, Copy-on-Write Proxy
+
+## 12. Compound Patterns: Patterns of Patterns
+    Pattersn are often used together and combined within the same design solution.
+    A compound pattern combines two or more patterns into a solution that solves a recurring or general problem.
+
+## 13. Better Living with Patterns: Patterns in the Real World
+    Pattern Categories: Creational-- Singleton, Abstract Factory, Factory Method, Builder, Prototype
+                        , Behavioral-- Template Method, Iterator, Command, Observer, State, Strategy, Visitor, Mediator, Memento, Interpreter, Chain of Responsiblity
+                        , Structural-- Decorator, Composite, Adapter, Proxy, Facade, Flyweight, Bridge
+    Think in Patterns:
+        1. Keep it simple (KISS)
+        2. Refactoring time is Patterns time! The goal is to improve its structure, not change its behavior.
+        3. Take out what you don't really need. Don't be afraid to remove a Design Pattern from your design. Patterns are powerful but complicated.
+    Complexity and patterns should only be used where they are needed for practical extensibility.
+    The Zen mind is able to see patterns where they fit natrually.
+    Overuse of design patterns can lead to code that is downright over-engineered. Always go with the simplest solution tha tdoes the job and introduce patterns
+        where the need emerges.
+    Patterns are tools not rules.
+    The gang of four: GoF.
+    Books:
+        1.Design Patterns: Elements of Reusable Object-Oriendted Software.
+        2. The Timeless Way of Building.
+        3. A Pattern Language.
+    Websites:
+        [The Porland Patterns Repository](http://c2.com/cgi/wiki?WelcomeVisitors)
+        [Hillside Group](http://hillside.net)
+    Patterns Zoo:
+        1. Architectural Patterns: used to create the living, vibrant architecture of buildings, towns, and cities. This is where patterns got their start.
+        2. Application Patterns: for creating system level architecture. many multi-tier architectures fall into this category: MVC
+        3. Domain-specific Patterns: that concern problems in specific domains like concurrent systems or real-time systems: J2EE.
+        4. Business Process Patterns: describe the interaction between businesses, customers and data, and can be applied to problems such as how to effictively make and commuincate decisions.
+        5. Organizational Patterns: describe the strucures and practices of human organizations. Most efforts to date have focused on organizations that produce and/or support software: Develpment team, Customer support team.
+        6. User Interface Design Patterns: address the problems of how to design interactive software programs.
+    An Anti-pattern tells you how to go from a problem to a BAD solution, e.g. Golden Hammer.
+
+## 14. Leftover Patterns:
+    1.Bridege: to vary not only your implementations, but also your abstractions.
+    2.Builder: to encapsulate the construction of a product and allow it to be constructed in steps.
+    3.Chain of Responsiblity: when you want to give more than one object a chance to handle a request.
+    4.Flyweight: When one instance of a class can be used to provide many "virtual instances".
+    5.Interpreter: to build an interpreter for a language.
+    6.Mediator: to centralize complex communications and control between related objects.
+    7.Memento: When you need to be able to return an object to one of its previous states; for instace, if your user request an "undo".
+    8.Prototype: When creating an instance of a given class is either expensive or complicated.
+    9.Visitor: When you want to add capabilities to a composite of objects and encapsulation is not important.
 
 # Design Principle:
    - Encapsulate what varies. Identify the aspects of your application that vary
@@ -184,3 +246,28 @@ Has-A can be better than a IS-A.
 
     - Iterator: provides a way to access the elements of an aggregate object sequentially
         without exposing its underlying representation.
+        Iterator<interface>: hasNext(); next();
+        Client call createIterator()
+
+    - Composite: allows you to compose objects into tree structures to represent part-whole
+        hierarchies. Composite lets clients treat individual objects and compositions of
+        objects uniformly.
+        Component<abstract class>: add(Component); remove(Component); getChild(i);
+                                   getName(); getDescription(); print();// by default throw exception or else
+        SpecificComponent: implementing Component
+
+    - State: allows an object to alter its behavior when its internal state changes.
+        The object will appear to change its class.
+        Context: holding different states and current state points to one of them. Actions are
+            delegated to state.
+        State<interface>: all actions();
+        SpecificState: implementing State and doing state transition.
+
+    - Proxy: provides a surrogate or placeholder for another object to control access to it.
+        Use the Proxy Pattern to create a representative object that controls access to another
+            object, which may be remote, expensive to create or in need of securing.
+            remote proxy:
+                server: implement remote interface; generate stub and skeleton; register it and
+                    run service.
+                client: get service by looking up, and call method on stub object.
+            virtual proxy:
