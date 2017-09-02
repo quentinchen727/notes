@@ -17,8 +17,7 @@ Pay attention to how you pay attention.
                              notifyObservers(); notifyObservers(Object arg); setChanged()
                 setChanged() is protected and means it cannot be called in non-package
                     non-subclass, which implies composition is not viable.
-    Observer pattern is heavily used in GUI frameworks and other places, including JavaBeans
-        and RMI.
+    Observer pattern is heavily used in GUI frameworks and other places, including JavaBeans and RMI.
 
 ## 3. The Decorator Pattern: Decorating Objects
     Code should be closed to change, yet open to extension.
