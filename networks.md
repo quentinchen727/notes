@@ -10,3 +10,9 @@ TCP client: socket->connect->send/recv
 UDP server: socket->bind->send/recv
 UDP client: socket->send/recv
 
+## URL encoding (percent encoding)
+Reserved characters used in unreservered purpose must be url encoded, using hexidemical bytes in ASCII preceded by %.
+The application/x-www-form-urlcoded type: 
+when data that has been entered into HTML forms is submitted, the form field names and values are encodeded and setn to the server in http request message using method GET or POST. The rncoding used by default is based on an early version of the general URI percent-encoding rules, with a number of modifications such as newline normalization and replace spaces with + instead of %20. The media type of data encoded this way is application/x-www-form-urlencoded, and it is currently defined in HTML and XForms specs. In addtion, the CGI specs contains rules for how web servers decode data of this type and make it available to applications.
+When HTML form data is sent in an http get request, it is included in the query component of the request URI using the same syntax described above. When sent in an http post request or via email. the data is placed in body of the message, and application/x-www-form-urlencoded is included in the message's Content-type header.
+

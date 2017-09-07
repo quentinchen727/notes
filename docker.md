@@ -214,4 +214,15 @@ Linux hosts use a kernel module called `iptables` to manager access to network d
 docker-compose -f foo1.yml -f foo2.yml // multi-layer compose file
 docker-compose build web; docker-compose --no-deps -d web // deploying changs
 
+## local storage on the docker host
+    cat /var/lib/docker/image/devicemapper/repository.json | python -mjson.tool
+    cat /var/lib/docker/image/devicemapper/respository.json | jq
+    docker images // locally
+    docker search // remotely on internet
 
+## miscelleanous
+Cannot publish port in images, as images are static while port mappings are dynamic.
+
+Ports vs Expose in docker-compose
+ports: expose ports to internal and external networks.
+expose: without publishing them to the host machine - they'll only be accessible to linked services.
