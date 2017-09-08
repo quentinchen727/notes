@@ -29,7 +29,7 @@ It support NSE scripts.
 nmap -sV -sC ip_address // scan using default scripts
 nmap --script-help=ssl-heartbleed // get help for a script
 nmap -sV -sp 443 -script=ssl-heartbleed.nse 1.1.1.1 // scan using a NSE script
-nmap -sV --script=smb* 1.1.1.1 // using a bunch of scripts
+nmap -sV --script=smb\* 1.1.1.1 // using a bunch of scripts
 nmap --script=http-title 1.1.1.1/24 // gather page titles from HTTP services
             = http-headers
             = http-enum
@@ -39,12 +39,15 @@ yum --showduplicates list httpd | expand   // see what particular versions are a
 expand  // convert tab to space
 yum install <package-name>-<version info>
 yum install httpd-2.4.6-6
-repoquery --show-duplicates "httpd_2.4*"
+repoquery --show-duplicates "httpd_2.4\*"
 yum --downloadonly <package>
 yumdownloader <package>  // downloading 
-yumdownload --resolve <package>
+yumdownload --resolve <package> // also download dependency
 yum localinstall <path to rpm>
-yum provides "*/brctl"
+yum provides "\*/brctl"
+
+To enable all yum operation to use a proxy server, setting it in /etc/yum.conf.
+for a specific use, set it in shell script and export it.
 
 ## apt-get (debian)
 apt-get update
