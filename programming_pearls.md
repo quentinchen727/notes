@@ -1,9 +1,18 @@
 # Programming Pearls
 
 ## Preface
-The Mythical Man Month, Fred Books, crucial role of management in large software projects.
-Code Complete, Steve MCConnell, good programming style.
-> Just as natural pearls grow from grains of sand tha thav irritated oysters, these programming perals have grown  from real problems that have irritated real programmers.
+- The Mythical Man Month, Fred Books, crucial role of management in large software projects.
+- Code Complete, Steve MCConnell, good programming style.
+- The Science of Programming, David Gries
+- The Medical Detective, Berton Roueche
+- Hints for Computer system design, Bulter lampson
+- How to lie with statistics, Darrel Huff
+- Introduction to Algorithms, Cormen, Leiserson and Rivest
+- Dr. Dobb's Essential Books on Algorithms and Data structures.
+- Art of Computer Programming, Don Knuth
+- Seminumerical algorithms, volume 2 of Don Knuth's Art of Computer Programming.
+- Algorithms, Bob Sedgewick
+> Just as natural pearls grow from grains of sand that irritated oysters, these programming perals have grown  from real problems that have irritated real programmers.
 
 ACM: communications of the association for computing machinery.
 
@@ -36,7 +45,7 @@ The problem boils down to whether we can represent at most ten million distinct 
 
 ####Implementation sketch
 
-Bitmap. Three attributes of this problem not usually found in sorting problems: the input is from a relatively small range, it contains on duplicates, and no data is associated with each record beyong the single integer.
+Bitmap. Three attributes of this problem not usually found in sorting problems: the input is from a relatively small range, it contains no duplicates, and no data is associated with each record beyong the single integer.
         
     /* phase 1: initialize set to empty */
     for i = [0, n)
@@ -85,6 +94,7 @@ Then use 4 bits or half byte(2^4=16) to represent each integer that could repeat
 #### Future reading
 Conceptual block: mental walls that block the problem-solver from correctly preceiving a problem or conceiving its solution. More creative thinking.
 
+
 A data index is a data structure that improves the speed of data retrieval operations on a database table at the cost of additional writes and storage space to maintain the index data structure. An index is a copy of selected columns of data from a table that can be searched very efficiently that also includes a low-level disk block address or direct link to the complete row of data it was copied from.
 
 
@@ -119,13 +129,13 @@ Show it in a hand-waving example
 ### Getting it together: Sorting
 Because of n!, any method that consider all permutations of letters for a word is doomed to failure.
 Any method that compares all pairs of words is doomed to failure.
-Aha: sign each each word in the dictionary so that words in the same anagram class ahve the same signature, and then bring together words with equal signatures. This reduces the problem to two subproblems: selecting a signature and collecting words with the same signature. Use a signature based on sorting: order the letters within the word alphabetically to solve the first. Sort the words in the order of their signatures to solve the second. SSort this way(with a horizontal wave of the hand), then that way(a vertical way).
+Aha: sign each each word in the dictionary so that words in the same anagram class ahve the same signature, and then bring together words with equal signatures. This reduces the problem to two subproblems: selecting a signature and collecting words with the same signature. Use a signature based on sorting: order the letters within the word alphabetically to solve the first. Sort the words in the order of their signatures to solve the second. Sort this way(with a horizontal wave of the hand), then that way(a vertical way).
 
 ### Principles
 Sorting: tor produce sorted output, either as part of the system specifications or as preparation for another program.
 Binary search: looing up an element in a sorted table is remarkably efficient. Only drawback is that the entire table must be known and sorted in advance.
 Signatures: each item in a class has the same signature and on other has.
-Problem definition. Determing what the user realy wants to do is an essential part of programming.
+Problem definition. Determing what the user really wants to do is an essential part of programming.
 A Problem solver's perspective. Sit back and wait for an insight rather than rushing forward with their first idea. Know the proper time.
 
 ### Problems
@@ -159,3 +169,910 @@ reverse((reverse(a)reverse(b)reverse(c)))
 6. a used-operated directory assistance
 Use a signautre of a name, sort by signature. Finding a name: use binary serach in a sorted array, or use hash or database.
 7. Transpose a 4000-by-4000 matrix
+To tranpose the row-major matrix, prepended the column and row to each record, sort by column then row, and then remove the column and row number, kind of like radix sort.
+8. Given a set of n real numbers, a real number t, and an integer k, how quickly can you dtermine whether there exists a k-element subset of the set that sums to at most t?
+Select the smallest k elements in the set:
+    - sort and select the first k elements: nlg(n)
+    - quick select, divide the set into two subset and the pivot is the kth largest: n
+9. Sequential search and binary search represent a tradeoff between search time and preprocessing time. How many binary search need be be preformed in an n-element table to buy back the preprocessing time required to sor the table.
+nlg(n)/(n-lg(n)) times.
+
+### Implementing an anagram program[sidebar]
+sort each word to get its signature, then sort each word by its signature and then squash them.
+
+## 3.Data Structure Programs
+A proper view of data does indeed structure programs.
+
+### 3.1 Survey Program
+An array or multi-dimensional arrays are the way to reduce viriable declaration and improve program performance.
+Conceptual blocks against using a dynamic array of counters.
+
+### 3.2 Form-letter programming
+Separating the view from the data.
+Writing the generator and the schema will probably be easier than writing the obvious program. Separating the data from the control will pay off handsomely. The shema can be manipulated with a text editor.
+
+### 3.3 An array of examples
+DRY.
+- Menu
+- Error Message
+- Data Functions
+- Word Analysis
+
+### 3.4 Structuring data
+OOP
+
+### 3.5 Powerful tools for specialized data
+- Hypertext: a unique interface
+- Name-value pairs: 
+- Spreadsheets
+- Databases
+- Domain-specific language.
+
+### 3.6 Principles
+Don't write a big program when a little one will do.
+Inventor's Paradox: the more general problem may be easier to solve.
+Data structure desing can have postive impacts:
+- recude big programs to small programs
+- time and space reduction
+- increased portability and maintainability
+
+Principles:
+- Rework repeated code into arrays
+- Encapsulate complex structures. Define it in abstract terms, and express those operations as a class, e.g. iterator patterns.
+- Use advanced tools when possible: hypertext, name-value pairs, spreadsheets. databases, domain-specific language.
+- Let the data structure the program.
+
+### 3.7 Problems
+1. Tax rate problem
+[base rate, lower bound, the rate over lower bound]. Used with binary search.
+2. A Kth-order linear recurrence with constant coefficients defines a series:
+Use two arrays or one array and one queue
+3. Write a "banner" function that is given a capital letter as input and produces an array of characters that graphically depicts that letter.
+An array of compound instructions to produce the required graphics.
+4. Write functions for the following date problems: given two dates, compute the number of days between them; given a date, return its day of the week; given a month and year, produce a calendar for the month as an array of characters.
+5. Suffix matching: reverse and match
+
+## 4. Writing correct programs
+Coding skill is just one small part of writing correct programs. The majority of the task is the subject of the three previous columsn: problem definition, alogrithm design, and data structure selection.
+
+### 4.1  The challenge of binary search
+Ninty percent of programmers failed to write a correct binary serach.
+The first binary search was publish in 1946, but hte first published binary search without bugs did not appear until 1962.
+
+### Writing the program
+The key idea of binary search is that we always know that if t is anywhere in x[0...n-1], then it must be in a certain range of x.
+Initalize range to 0..n-1
+loop
+    ***{invariant: mustbe(range)}***
+    if range is empty
+        break and report that t is not in the array
+    compute m, the middle of the range
+    use m as a probe to shrink the range
+        if t is found during the shrinking process,
+        break and reports its position
+
+use two indices l and u to represent the range l.u.
+Initialization consists of the assignments l = 0 and u = n - 1.
+    if l > u
+        p = -1; break
+    m = (1 + u ) / 2
+    use ma as a probe to shrink the range l..u
+    if t is found during the shrinking process,
+    break and note its position.
+    case
+        x[m]<t: action a; mustbe(m+1,u): l = m+1;
+        x[m]=t: action b; p=m; break
+        x[m]>t: action c; u = m - 1
+
+The basic techniques of program verification: stating the invariant precisely and keep and eye towards maintaining the invariant as we wrote each line of code.
+
+### 4.3 Understanding the program
+- Initialization
+- Preservation
+- Termination
+Put a lot of assertion to ensure the invariant.
+
+### 4.4 Principles
+- Asserstions: The relations among input, program variables, and output describe the "state" of a program; assertions allow a programmer to enunciate those relations precisely.
+- Sequential Control Structures: Place assertions between them and analyze each step of the program's progess individually.
+- Selection Control structures: 
+- Iteration control: initialization, each loop, and termination
+- Functions: a contract, if precondition is satisfied, postcondition is guaranteed.
+    - precondition staet that must be true before it is called.
+    - postcondition: what the function will guarantee on termination.
+
+### 4.5 The roles of program verification
+Deciding which assertions to include in real software is an art that comes only with practice.
+Assertions are crucial during maintainance of a program.
+Use the techniques frequently to stay away from bugs.
+
+### 4.6 Problems
+1. To avoid word overflow, division by zero, variables out of declared range, or array indices out of bounds.
+    word overflow: m = (u-l)/2 + l;
+    array indices out of bounds: add condition 0<=l<=n and -1 <=u < n to the invariant.
+    Or define fictitous boundary elements.
+2. Find the first element if there are duplicate elements in a sorted array.
+    Add two dummy elements x[-1]=-OO and x[n] = +00
+3. Find a point between two rungs
+    Binary search
+4. Make the binary serach faster?
+
+
+## 5. A Small Matter of Programming
+Wise programmers build *** scaffolding to give them easy access to the function.
+
+### 5.1 From psudocode to C
+    int binarySearch(DataType t) {
+    int l, u, m;
+    l = 0;
+    u = n -1;
+    while (l<=u) {
+        m = l + (u-l)/2;
+        if (x[m] < t) {
+            l = m + 1;
+        } else if (x[m]==t) {
+            return m;
+        } else {
+            u = m - 1;
+        }
+    }
+    return -1;
+}
+
+### 5.2 A test harness
+Debugger and print statements
+
+### 5.3 The art of assertion
+The weak assertion merely repeats the condition in `if` statement.
+assert((u<0 || x[u]<t)&&(u+1>=n||x[u+1]>t)) to make sure u is in array range
+assert(size<oldsize) to make sure the range is shrinking.
+assert(sorted(array)) to make sure the array is sorted.
+Assertion are helpful as we test the function in its scaffolding, and as we move from component test through system test.
+Some preprocessors complied away the assertionsincur no-turn-time overhead in production, while it is like a sailer who wears a life vest while drilling on the shore and takes it off at sea.
+Use of assertions in industrial-stength software.
+
+### 5.4 Automated testing
+Test exaustively, covering the empty array, common size for bugs(zero, one and two), several pwoers of two,a dn many number one away from a power of tw.
+
+### 5.5 Timing
+Time and measure it in different scales.
+
+### 5.6 The Complete Program
+
+### 5.7 Principles
+- Scaffolding
+- Coding: psudocode -> implementation language
+- Testing: One can test a component much more easily and thoroughly in scaffolding than in a large system.
+- Debuging
+- Timing. Conduct experiment ot ensure that its performance is what we expect.
+
+### 5.8 Problems
+1. When writing large programs, use long names for global variables. Use short name for building scaffolding and essential for mathematical proofs.
+Clarity is often achieved through brevity.
+2. Caching behavior in timing scaffolding.
+3. The tab-separated output format of the scaffolding is designed to be compatible with most spreadsheets.
+
+### 5.9 Debugging
+Debugging is hard. Great debuggers, though, can make the job look simple.
+
+# Part II: Peformance
+A simple, powerful program that delights its users and does not vex its builders.
+One specific aspect of delightful programs: efficiency.
+Efficiency has the advantage that it can be measured, while discusstion on userinterfaces often get bogged down in personal tastes.
+- intrisic importance
+- educational
+- Need for speed.
+
+## 6. perspective on performance
+### 6.1 A case study
+n-body simulation problem in physics:
+- Algorithms and data structure: By representing the physical objectss as leaves ina binary tree; higer nodes represent clusters of objects. The tree has roughly log(n) level, and the resuling O(nlgn).
+- Algorithm tuning
+- Data structure reorganization.
+- Code Tuning: 64-bit double-precision floating point numbers could be replaced by 32-bit single-precision numbers; that change halved the run time. Rewriting one high-weight code in assembly language increased its speed by a factor of 25.
+- Hardware. A floating point accelerator.
+
+### 6.2 Design levels
+many levels, ranging from its high-level software structure down to the transistors in its hardware.
+- Problem Definition.
+- System Structure. The decomposition of a large system into modules is probably the single most important factor in determing its performance.
+- Algorithms and Data structures. The keys to a fast module are usually the structures that represent its data and the algorithms that operate on the data.
+- Code tuning.
+- System software. New database system? Operating system? Compiler optimization?
+- Hardware.
+
+### 6.3 Principles
+- The cheapest, fastest and most reliable components of a computer system are thos that aren't there.
+- If you need a little speedup, work at the best level.
+- If you need a big speedup, work at many levels.
+
+
+## 7 The back of envelope
+### 7.1 Basic skills
+- Two answers are better than one
+- Quick checks.
+- Rules of Thumb. rate of return per year X year == 72, then your money will double, which is the rule of 72. 2^10 == 1024. 
+    pie second is a nanocentury. 3.155 X 10^7 seconds in a year.
+    10^7 seconds is about 4 months.
+Casting out nines: the sums of the digits are equal after "casting out" groups of digits that sum to nine.
+- Practice. As with many activities, your estimation skills can only be improved with practice.
+
+### 7.2 performance estimates
+Variables also consume metadata, which is an overhead to memory consumption.
+Caching also play an important role in speed.
+Little experiments can put key parameters at your fingertips. The short time required to do such little experiments today will be more than paid in the time you save by making wise decision tomorrow.
+
+### 7.3 Safety factors
+The output of any calculation is only as good as its input.
+If the input is unknown, take considerable safety factors into accounts.
+In making reliability/availability commitments, we ought to stay back from the objectives we think we can meet by a facotr of ten, to compensate for our ignorance. In estimating size and cost and schedule, we should be conservative by a factor of two or four to compensate for our ignorance.
+
+### 7.4 Little's Law
+The average number of things in the system is the product of the average rae at which things elave the system and the average time each one `spends` in the system.
+The average number of objects in a queue is the product of the entry rate and the average `holding` time.
+
+### 7.5 Principles
+Everything should be mad as simple as possible, but no simpler.
+
+### 7.6 Problems
+death rate ~= 1/life expectancy, according to little's law.
+
+### 7.7 future reading
+Fermi problems
+
+## 8. Algorithm Design Techniques
+### 8.1 the problem and a simple algorithm
+Find the maximum sum in any contiguous subvector of the input.
+Brute force: O(n^3)
+
+### 8.2 Two quadratic algorithms
+    maxsofar = 0
+    for i = [0,n)
+        sum = 0
+        for j = [i,n)
+            sum += x[j]
+            maxsofar = max(maxsofar, sum)
+
+    cumarr[-1] = 0
+    for i = [0,n)
+        cumarr[i] = cumarr[i-1] + x[i]
+    maxsofar = 0
+    for i = [0,n)
+        for j = [i,n)
+            sum = cumarr[j] = cumar[i-1]
+            maxsofar = max(maxsofar, sum)
+
+### 8.3 A divide-and conque algorithm
+To solve a problem of size n, recursivley solve two subproblems of size approximately n/2, and combine their solutions to yield a solution to the complete problem.
+Maximum subarray problem, or stock puchasing problem with just one opportunity
+    float maxsum3(l,u)
+        if (l>u)
+            return 0
+        if (l == u)
+            return max(0, x[l])
+        m = (l+u)/2
+        lmax = sum = 0
+        for (i=m; i>=l; i--)
+            sum += x[i]
+            lmax = max(lmax, sum)
+        rmax = sum = 0
+        for i = (m,u]
+            sum += x[i]
+            rmax = max(rmax, sum)
+        return max(lmax+rmax, maxsum3(l,m), maxsum3(m,u))
+T(n) = 2T(n/2) + O(n) => T(n) = O(nlgn)
+
+### 8.4 Scanning algorithm
+Kadane's algorithm
+The maximum-sum subarray in the first i elements is either in the first i-1 elements(maxsofar), or it ends in position i(which we'll store in maxendinghere)
+    maxsofar = 0
+    maxendinghere = 0
+    for i = [0,n)
+    /* invariant: maxendinghere and maxsoar are accurate for x[0..i-1]*/
+    maxendinghere = max(maxendinghere+x[i],0)
+    maxsofar = max(maxsofar, maxendinghere)
+It is a linear and online algorithm.
+
+### 8.5 What does it matter?
+When we are comparing cubic, quaratic and linear algorithms with one another, th econstan factors of the programs don't matter much.
+
+### 8.6 Principles
+- Save state to avoid recomputation.  The simple form of dynamic programming avoid use time to compute them by using space to store results.
+- Preprocess information inta data strucutres.
+- Divided-and-conquer algorithms. 
+- Scanning algorithms. Problems on arrays can often be solved by asking "how can I extend a solution for x[0...i-1] to a solution for x[0...i]?"
+- Cumulatives.
+- Lower bounds. Algorithm designers sleep peacefully only when thye know their algorithms are the best possible.
+
+### 8.7 Problems
+9. We defined the maximum subvector of an array of negative numbers to be zero, the sum of the empty subvector. Suppose that we had instead defined the maximum subvector to be the value of the largest element; how would you change the various programs?
+maxsofar=-00 or x[0]
+10. Suppose that we wished to find the subvector with the sum closet to zero rather than that with maximum su. What is the most efficient algorithm you can design for this task? What algorithm design techniques are applicable? What if we wished to find the subvector with the sum closest to a given real number?
+Using cumulative array, sort it and find two adjacent values  with the minimum gap.
+11. A turnpike consists of n-1 stretches of road between n toll stations; each stretch has an associated cost of travel. It is trivial to tell the cost of going between any two stations in O(n) time using only an array of the costs or in contant time using a table with O(n^2) entries. Descrie a data structure that requires O(n) space but allows the cost of any route to be computed in constant time.
+An accumulative array will do it.
+13. In the maximum subarray problem we are given an nxn array of reals, and we must find the maximum sum contained in any rectangular subarray. What is the complexity of this problem?
+Fix left and right column, and use Kadane's algorithm to calculate the maximum subarray of each sum of every row from left to right column. The run time is O(n^3).
+14. Given integers m and n and the real vector x[n] , find the integer i (0<=i\<n-m) such that the sum x[i]+...+x[i+m] is nearest zero.
+Use accumulative array.
+
+### 8.8 Future Reading
+Only extensive study and practice can put algorithm design techniques at your fingertips.
+
+
+## 9. Code Tuning
+Good programmers keep efficiency in context.
+
+### 9.1 Typical story
+Profile the program to find out the bottleneck.
+The principle of caching: data that is accessed most often should be the cheapest to access.
+
+### 9.2 A first aid sampler
+1. Problem one - Integer Remainders
+C remainder operator % can be very expensive, ten times slower than most arithmetic operations.
+Fetch RAM into caches vs computation???
+It was futile to try to speed up the computations in programs that spend their time doing input and output. On modern architecutres, it is equally futile to try to reduce computation time when so many of the cycles are spent accessing memory.
+2. Problem two - functions, Macros, and Inline Code.
+C++ allows one to request that a function be compiled inline, which combines the clean semantics of functions with the low overhead of macros.
+3. Problem Three - Sequential search.
+Reduce check in loop to reduce run time.
+On modern machines, loop unrolling can help to avoid pipeline stalls, to reduce branches, and to increase instruction-level parallelism.
+4. Problem Four - computing spherical distances.
+Rather than using latitudes and longitudes, represent a point's location on the surfaceof the globe by its x, y and z coordinates. Thus the data strucutre is an array that holds each point's latitude and longitude as well as its three Cartesian coordiantes. Its distance to a point in S is computed as the sum of the squres fo the differences in the three dimensions, which is much cheaper than computing one trigonometric function.
+Code turning solves the problem with a couple of dozen lines of code, while algorithmica and data strucutre changes would have required many hundreds of lines.
+
+### 9.3 Major surgery - binary search
+orginal binary search: (find any occurrence)
+    l = 0; u = n - 1;
+    loop
+        /*invariant: if t is present, it is in x[l...u]*/
+    if l > u
+        p = -1; break;
+    m = l + (u-l)/2;
+    case
+        x[m] < t: l = m+1;
+        x[m] == t: p = m; break;
+        x[m] >t: u = m - 1;
+
+Improved binary search: (only find the first occurrence)
+    l = -1; u = n;
+    while l+1 != u
+        /* invariant: x[l] < t && x[u] >= t && l < u */
+        m = l + (u-l)/2;
+        if x[m] < t
+            l = m
+        else 
+            u = m
+        /* assert l+1==u && x[l]<t && x[u]>=t */
+        p = u
+        if p>=n || x[p] != t
+            p = -1
+// It compares only once and have only two branches, which is more efficient.
+
+Further improved algorithm removes the overhead of loop contorl and the division of i by tow by unrolling the entire loop. Must know the size of the array pre-computionally.
+
+
+### 9.4 Principles
+The most important principle about code tuning is that it should be done rarely.
+- The role of efficiency. Many other properties of software are as important as efficiency, such as correctness, functionality, and maintainablity.
+- Measurement Tools. Profiling points to the critical areas; for other parts we follow the wise maxim of, "If it ain't broke, don't fix it".
+- Design Levels. Before tuning code, we should make sure that other approaches don't provide a more effective solution.
+- When speedups are slowdowns. People who play  with bits should expect to get bitten.
+
+- Exploit common cases: Caching a list of the most common kind of record.
+- Exploit an Algebraic Identity: to replace an expensive remainder operation with a cheap comparison.
+- Collapsing a procedure hiearchy: replacing a function with a macro, but writing the code inline made no further difference.
+- Using a sentinel to combine Tests and loop unrolling.
+- Data structure augmentation and Exploit an algebraic identity.
+- Combining tests reduces the number of array comparisions.
+We can turn code for other purposes, such as reducing paging or increasing a cache hit ratio.
+
+### 9.5 Problems.
+1. malloc optimzation
+If a fixed length of memory is request repeatly, assign a group of fixed length of memory, and return them on demand.
+4. # define max(a,b)((a)>(b)?(a):(b)) will call the function two times, which produces a run time of 2^n.
+5. How do the various binary search algorithms behave if they are applied to unsorted arrays?
+If found, the target is indeed in the array. Otherwise, it will find two adjacjent elements in the array and report that target is not in the array.
+6. How would you implement functions such as isdigit, isupper and islower to determine the type of characters?
+if c>='0' && c <='9'  // put the test most likely to succeed first.
+Store several bits in each element of a table, then extract them with a logical :
+#define isupper(c) (bigtable[c]&UPPER)
+#define isalnum(c) (bigtable[c]&(DIGIT|LOWER|UPPER))
+inspect ctype.h
+7. given a very long sequence of byese, how would you efficiently count the total number of one bits?
+Look at the bits in order, or perform a lookup in a table of 2^16 elements.
+The second approach: to count the number of each input unit in the iput, and then at the end take the sum of that number mulitplied by the number of one bits in that unit.
+8. How can sentinel be sued in a program to find the mximum element in an array?
+Compute the maximum element of x[0...n-1], using x[n] as sentinel:
+    i = 0;
+    while i < n
+        max = x[i]
+        x[n] = max
+        i ++
+        while (x[i]<max)
+            i++
+
+10. Hashing is more time-efficient than binary search, but consuming more space.
+
+11. Replacing the function evaluation by serval 72-element tables.
+
+12. The following code use 2n multiplications
+    y = a[0]
+    xi = 1
+    for i = [1,n]
+        xi = x * xi
+        y = y + a[i] * xi
+
+    The following use only n multiplications:
+    y = a[n]
+    for i = [n-1,0]
+        y = x * y + a[i]
+
+
+### Appendix 3 Cost models for time and space
+Overhead associated with new operator.
+All of the arithmetic and logical(bitwise) operations have about the same cost, with the exception of the division and remainder operator, which are an order-of-magnitued omre expensive.
+The function versions of comparing and swapping cost a little more than their inline couterparts.
+The floating operations cos tabout as much as their integer couterparts, and the array operations are equally inexpensive.
+The rand function is relatively inexpensive, swaure root is an order of magnitued greater than basic arithmetic operations(twice the costof a division), simple trigonometric operations cost twice that, and advanced trigonometric operations run into microseconds.
+Memory allocation is more expensive yet.
+
+
+#### Appendix 4: Rules for code tuning
+- Space-for-time rules
+    - Data structure augmentation: augment the strucutre with extra information or chaning the information withinin the structure.
+    - Store precomputed results. The cost of recomputing an expensive function can be reduced by computing the function only once and storing the results. Subsequent request for the function are hten handled by table lookup rather then by computing the function. 
+    - Caching.
+    - Lazy evaluation. Never evaluate an item until it is needed.
+- Time-for-space rules
+    - Packing.  Although packing sometimes trades time for space, the smaller representations are often also faster to process.
+    - Interpreters.
+- Loop rules
+    - Code Motion out of loops. Better to perform a certain computation only once, outside the loop.
+    - Combing Tests. An efficient inner loop should contain as few tests as possible.
+    - Sentinels. Place a sentinel at the boundary of a data structure to reduce the cost of testing whether our search has exhausted the structure or yield clean code for arrays, linked lists, bins and binary search trees.
+    - Loop unrolling. It can remove the cost of modifying loop indices, and also help to avoid pipeline stalls, to reduce branches, and to increase instruction-level parallelism.
+    - Transfer-Driven loop unrolling.
+    - Unconditional branch removal.
+    - Loop fusion.
+- Logic rules
+    - Exploit algebraic identities.
+    - Short-circuiting monotone functions.
+    - Reordering tests. Inexpensive and often successful tests precede expensive and rarely successful tests.
+    - Precompute logical functions. A logical function over a small finite domain can be replaced by a lookup in a table that represent the domain.
+    - boolean variable elimination. Remove boolean variables by replacing the assignment to boolean variables by a if-else statement.
+- Procedure rules
+    - Collapsing function hierachies.
+    - Exploit common cases. Functions shold be organized to handle all cases correctly and comon case efficiently.
+    - Coroutines. A multiple-pass algorithm can often be turned into a single-pass algorithm by use of coroutines.
+    - Transformations on Recursive functions. Rewrite recursion to iteration. Convert the recursion to iteration by using an explicit program stack. Romove tail recursion. It is often more efficient to solve small subproblems by use of an auxiliary procedure, rather than recurring down to problems of size zero or one.
+    - Parallelism. A program should be structured to exploit as much of the parallelism as possible in the underlying hardware.
+- Expression rules
+    - Compile-time initialzation. As many variables as possible should be initialized before program exectution.
+    - Exploit algebraic identities.
+    - Common subexpression elimination.
+    - Pairing computation. If two similar expression are frequently evaluated together, then we should make a new prodecure that evaluates them as a pair.
+    - Exploit world parallelism. Use the full datapath width of the underlying computer architecture to evaluate expensive expressions.
+
+
+### 10. Squeezing Space
+Reducing space often has desirable side-effects on run time.
+
+### 10.1 The Key - Simplicity
+Simplicity can reduce memory space usage and also code space, not only source code but object code.
+
+### 10.2 An illustrative problem
+Represent a 10,000 x 10,000 matrix with a million active entries on a hundred-megabyte computer.
+Solution to sparse matrix: use an array to represent all columns, and linked lists to represent the active elements in a given column.
+parallel array to represent the pointers.
+Key indexing.
+Classic problem: sparse array representation(a sparse aray is one in which most entires have the same value, usually zero).
+
+### 10.3 Techniques for data space
+- Don't store, recompute. E.g., matrix of points, generator programs for huge objects, installing software from a CD or DVD-ROM. "Store, don't retransmit"
+- Sparse Data structures. 
+- Key indexing. If we use a key to be stored as an index into a table, then we need not sotre the key itself; rather, we store only its relevant attributes.
+- Storing pointers to shared large objects.
+- Data compression.
+- Allocation Policies. Dynamic allocations avoid waste by allocating records as needed.
+- Garbage collection.
+- Sharing storage: c[max(i,j), min(i,j)]
+- On modern computing systems, it may be critical to use cache-sensitive memory layouts. Even though arrays touch more data than linked lists, they are faster because their sequential memory accesses interact efficiently with the system's cache.
+
+### 10.4 Techniques for code space
+- Function definition.
+- Intepreters. Replace a long line of program text with a four-byte command to an interpreter.
+- Translation to Machine language. As a last resort, a programmer might consider coding key parts of a large system into assembly language by hand.
+
+### 10.5 Principles
+- The cost of space. Know the cost of space before you set out to reduce that cost.
+- The "Host Spots" of space.
+- Measuing Space.
+- Tradeoffs. Often reducing space may have a positive impact on the other dimensions.
+- Work with the Environment. Compiler, run-time system, memory allocation policies, and pageing policies.
+- Use the right tool for the job.
+
+### 10.6 Problems
+1. Every high-level language instruction that accessed one of the packed fields compiled into many machine instructions.
+2. Write a program to build a sparse-matrix data structure?
+((x,y), pointnum) build an array sorted by x then y.
+5. a function with a difference table.
+6. c = a*10 + b. Decode it with / and %. Discuss the time and space tradeoffs iinvolved in replacing those operatoins by logical operations or table lookups.
+Replacing the expensive / and % operations with a table lookup cost 200 bytes of primary memory but reduced the read time almost to its original cost. Thus 200 bytes bought more disk space.
+Or c= (a<<b) | b, and a = c>>4 and b = c&0xF. Not only shifting and maksing commonly faster than multiplying and dividing, but common utitlies like a hex dump could display the encoded data ina readable form.
+10. raw sound files .wav->.mp3, raw image .bmp ->.gif or .jpg, raw motion picture files .avi -> mpg
+
+### 10.7 Future reading
+dynamic programming, retrograde analysis.
+
+# Part III: The product
+
+## Column 11: sorting
+### 11.1 Insertion sort
+Insertion sot is the method used to sort cards.
+    for i = [1,n)
+        /* invariant: x[0...i-1] is sorted */
+        /* goal: sift x[i] down to its proper place in x[0...i]*/
+version 1:
+    for i = [1,n)
+        for (j=i; j>0 && x[j-1]>x[j];j--)
+            swap(j-1,j)
+version 2 (inline function)
+    for i = [1,n)
+        for (j=i; j>0&& x[j-1]>x[j];j--)
+            t = x[j]; x[j] = x[j-1]; x[j-1] =t;
+version 3:
+    for i = [1,n)
+        t = x[i]
+        for (j=i; j>0&&x[j-1]>t; j--)
+            x[j]=x[j-1]
+        x[j]=t 
+Note: if this input array is already almost sorted, thought, Inserstion sort is much faster than quicksort because each element sifts down just a short distance.
+
+### 11.2 A simple quicksort
+"Quicksort" by C.A.R. Hoare
+A partition operation goes a long way towards sorting the sequence, while the sift operation of Insertion sort mananges to get just one more element into the right place.
+    void qsort(l,u)
+        if l>=u then
+            /* at most one element, do nothing */
+            return
+        /* goal: partition array around a particular value, which is eventually place in its correct position p. */
+        qsort(l, p-1)
+        qsort(p+1, u)
+
+A simple scheme from Nico Lomuto:
+    Given the value t, we are to rerange x[a..b] and ocmpute the index m(for the "middle") such that all elements less than t are to one side of m, while all othe relements are on the other side. Accomplish the job with a simple for loop that scans the array from left to right, using the variable i and m to maintain the following invariant in array x. Two-sided partitioning in most presentation is tricky, and easy to have bug in it.
+    t|a   <t      m | >=t     |i   ?    b|
+    m = a - 1
+    for i = [a,b]
+        if x[i] < t
+            swap(++m, i)
+In quickSort, we'll partition the array x[l..u] around the value t=x[l], a will therefore be l+1 and b will be u.
+    (l)t| <t     m| >=t    | i ?   u|
+    we then swap x[l] with x[m], otherwise x[l] will never be moved.
+    Then recursive call qsort(l, m-1) and qsort(m+1, u).
+
+    void qsort(l,u)
+        if (l>=u)
+            return
+        m = l
+        for i = [l+1, u]
+            /* invariant: x[l+1..m] < x[l] && x[m+1...i-1] >= x[l]*/
+            if (x[i] < x[l])
+                swap(++m,i)
+        swap(l,m)
+        /* x[l..m-1]<x[m] <= x[m+1..u] */
+        qsort(l, m-1)
+        qsort(m+1, u)
+This QuickSort runs in O(nlgn) time and O(lgn) stack space on the average. The lower bound that any comparison-based sort must use O(nlgn) comparisons; Quicksrot is there close to otimal.
+
+### 11.3 Better quicksorts
+If an array of n identical elements, the qsort1 function blows this case badly. Each of n-1 partitioning passese use O(n) to peel off a single element, so the total run time is O(n^2).
+To solve that, use a careful two-sided partitioning code, using this loop invariant:
+    l(t)|  <=t    i| ???    |j >=t    u|
+Stop each scan on equal elements, and swap them.
+    void qsort3(l, u)
+        if l >= u
+            return
+        t = x[l]; i=l; j = u+1
+        loop
+            do i++ while i<=u && x[i]< t
+            do j-- while x[j]>t
+            if i > j
+                break
+            swap(i,j)
+        swap(l, j)
+        qsort3(l, j-1)
+        qsort3(j+1, u)
+This quicksort tames teh denegerate case of all equal elements and also perform less swaps on the average than qsort1.
+But, if the array is already sorted in increasing order, for instance, it will partition around the smallest element, and then the second smalleset,, in O(n^2) time. We do far better to choose a partitioning element at random: swap(l, randint(l,u));
+
+When Quicksort is called on a small subarray, we do nothing.Call Insertion Sort on the final almost sorted array.
+    qsort4(0,n-1); isort3()
+    void qsort4(l,u)
+        if u - l < cutoff
+            return
+        swap(l, randint(l,u))
+        t = x[l]; i = l; j = u + 1;
+        loop
+            do i++; while i <= u && x[i]<t
+            do j--; while x[j]>t
+            if i > j
+                break
+            tmp = x[i]; x[i]= x[j]; x[j]= tmp;
+        swap(l,j)
+        qsort4(l, j-1)
+        qsort4(j+1, u)
+
+### 11.4 Principles
+The C library qsort is easy and relatively fast; it is slower than hand-made Quicksort only because its general and flexible interface uses a function call for each comparison. The C++ library sort has the simplest interface, and also has a particularly efficient implementation. If a system sort can meet your need, don't even consider writing your own code.
+
+### 11.5 Problems
+2. remove conditoinal check and final swap in qsort:
+t(l) |  ???  i|  <t    | m   >=t    u|
+    m = i = u + 1
+    do
+        while x[--i] <t
+            ;
+        swap(--m, i)
+    while i != l
+9. Find kth-smallest element in an aray in O(n).
+    void select(l,u,k)
+            pre l<=k<=u
+            post x[l..k-1]<=x[k]<=x[k+1..u]
+        if l >=u
+            return
+        swap(l, randint(l,u))
+        t = x[l]; i = l; j = u+1
+        loop
+            do i++; while i <=u && x[i]<t
+            do j--; while x[j]>t
+            if i>j
+                break
+            tmp = x[i]; x[i]=x[j];x[j]=tmp;
+        swap(l,j)
+        if j < k
+            select(j+1, u, k)
+        else if j>k
+            select(l,j-1,k)
+Because the recursion is the last action of the function, it could be transformed into a while loop.
+11. Dutch flag problem
+ | < t   |  = t  | > t
+Use three pointers?!
+
+## Column 12: A Sample problem
+### 12.1 The problem
+Random sampling
+### 12.2 One solution
+Knuth's algorithm to pick m random number out of n numbers i order:
+    select = m
+    remaining = n
+    for i = [0, n)
+        if (bigrand()%remainging) < select
+            print i
+            select--
+        remaining --
+
+    void genknuth(int m, int n)
+    { for int(i=0; i<n; i++)
+        /* select m of remaining n-i */
+        if((bigrand() % (n-i) < m) {
+            cout <<i <<"\n";
+            m--;
+        }
+    }
+
+### 12.3 The design space
+Solving current or future problem require preparing, either taking classes or studying books, or mental exercise of asking how we might have solved a problem differently.
+- Use set:
+    initialize set S to empty
+    size = 0
+    while size < m do
+        t = bigrand()%n
+        if t is not in S
+            insert t into S
+            size ++
+    print the elements of S in sorted order
+- Shuffle an n-element array that contains the number 0...n-1, and then sort the first m for the output.
+    Knuth's algorithm
+    for i = [0,n)
+        swap(i, randint(i,n-1))
+
+### 12.4 Principles
+- Understanding the preceived problem.
+- Specify an abstract problem.
+- Explore the Design space. Don't jump into "The" solution.
+- Implement One solution. At other times we have to prototype the top few to choose the bes. Weh should strive to implement the chosen design in straightforward code, using the most powerful operations avaiable.
+> The purpose of software engineering is to control complexity, not to create it.
+- Retrospect.
+> There remains always something to do; with sufficient study and penetration, we can always improve any solution, and, in any case, we can always improve our understanding of the solution.
+
+### 12.5 Problems
+1. The C library rand() function typically returns about fiftenn random bits. use that function to implement a function bigrand() to return at least 30 random bits, and a function randint(l,u) to return a random integer in the range [l,u].
+    int bigrand() {
+        return RADN_MAX * rand() + rand();
+    }
+    int randint(int l,int u) { return l + bigrand()%(u-l+1);}
+2. Describe an algorithm that choose each element equiprobably, but choose some subsets with greater probability than others.
+Select m integers from the range 0...n-1,  choose the number i at random in the range, and then report the numbers i, i+1,..., i+m-1, possibly wrapping around to 0. Tis method chooses each integer with probability m/n, but is strongly biased twoards certains subsets.
+3. *** Bernoulli trail ***: success, which occurs with probability p, and failure, which occurs with probablity q = 1-p.
+E[X]= 1/p means it takes 1/p time to get a success.
+Coupon Collecter's problem: how many basebasll cards must I collect to make sure I have all n? the answer is roughly nln(n).
+Birthday Paradox: in any group of 23 or more people, two are likely(at least 50%) to shared a birthday.
+In general, two balls are likely to share one of n urns if there are O(sqrt(n)) balls.
+10. How would you select one of n objects at random, where you see the objects sequentitally but you don't know the value of n beofrehand?
+    i = 0
+    while more input lines
+        with probability 1.0/++i
+            choice = this iput line
+    print choice
+10. How would you select one of n objects at random, where you see the objects sequentitally but you don't know the value of n beofrehand?
+    i = 0
+    while more input lines
+        with probability 1.0/++i
+            choice = this iput line
+    print choice
+11. A promotional game consists of a card containing 16 spots, which hide a random permutation of the integers 1..16. The player rubs the dots off the card to expoese the hidden integers. If the integers 3 is ever expoese then the card loses; if 1 and 2 are both revealed then the card wins. Describe the probablity thatn randomly choosing a sequence of spots wins the game.
+4..16 are irrelevant. We just need to consider 1..3, only if 3 is the last one of three, we will win, so the probability is 1/3. Don't be misled by the statement, Don't use computer just because it is available.
+
+
+## Column 13: Searching
+### 13.1 The interface
+### 13.2 Linear structures
+Arrays are excellent structure for sets when the size is known in advance. Because our arrays are sorted, we could use binary search to build a member function that runs in O(lgn) time.
+
+*** Put a sentinel in the end of array or linked list to make code simpler ***
+
+If the size of a set is not know in advance, linked lists are a prime candidate for set representation; list also remove the cost of sliding over elements in an insertion.
+To insert an item into a sorted linked list, we walk along the list.
+The simplest code is a recursive function:
+    void insert(t)
+        head = rinsert(head,t)
+    node *rinsert(p,t)
+        if p->val < t
+            p->next = rinsert(p-next, t)
+        else if p->val>t
+            p = new node(t,p)
+            n ++
+        return p
+When a programming problem is hidden under a pile of special cases, recursion often leads to code as straightforward as this.
+
+However, the recursion causes lots of overhead.
+Storage allocation is about two orders of magnitued more time-cosuming than most simple operations.
+Allocating the nodes individually will consume more memory what overflows the Level-2 cache.
+Like most code-tuning techniques, caching and recursion removal sometimes yield great benefit, and other times have no effect.
+large list must read 8-bytes nodes into a cache to access the 4-byte integer. Array access data with perfect predictability, while access patterns for lists bounce all around memory.
+
+### 13.3 Binary search trees
+We initialize the tree by setting the root to be empty, and perform the other actions by calling recursive functions.
+    void insert(int t) { root = rinsert(root, t);}
+    node *rinsert(p, t)
+        if p == 0
+            p = new node(t)
+            n ++
+        else if t < p->val
+            p->left = rinsert(p->left,t)
+        else if t > p->val
+            p-right = rinsert(p->right, t)
+        // do nothing if p->val == t
+        return p
+
+    void inorderTraverse(p)
+        if p == 0
+            return
+        traverse(p->left)
+        v[vn++] = p->val
+        traverse(p->right)
+This simple BST avoids the complex balancing scheme used by the STL.
+Convert recursion to iteration and use sentinel, and allocate all nodes all at once for speedup.
+
+### 13.4 Strucutres for integers
+#### BitVectors
+enum { BITSPERWORD=32, SHIFT=5, MASK=0x1F};
+int n, hi, *x;
+void set(int i) { x[i>>SHIFT] |= (1<<(i&MASK));}
+void clr(int i) { x[i>>SHIFT] &= ~(1<<i&MASK);)}
+int test(int i) { return x[i>>SHIFT] & (1<<(i&MASK));}
+InsetBitVec(maxelements, maxval) 
+    hi = maxval
+    x = new int[1+hi/BITSPERWORD]
+    for i = [0,hi)
+        clr(i)
+    n = 0
+if the maximum value n is small enough so that the bit vector fits in main memory, then the structure is remarkably efficient.
+### Bins (a kind of hashing)
+The m bins can be views as a kind of hashing. The integers in each bin are represented by a sorted linked list. Because the integer are uniformly distributed, each linked list has expected length one.
+mapping: t*bins/maxval can lead to numberical overflow, instead we change it to t/(1+maxval/bins)
+    void insert(t)
+        i = t/(1+maxval/bins)
+        bin[i] = rinsert[bin[i], t]
+Bins are fast.
+
+### 13.5 Principles
+Set representation |  O( time per operatoin)   | Total time     Space in words
+                      Init    insert  report
+========               ===============            ==============
+Sorted Array       |   1       m        m      |    O(m^2)           m
+Sorted List        |   1       m       m       |    O(m^2)           2m
+Binary Tree        |   1      lg m     m       |    O(mlgm)          3m
+Bins               |   m       1       m       |    O(m)             3m
+Bit vector         |   n       1       n       |    O(n)             n/b
+
+- The role of libaries: when you face a problme with data structures, your first inclination should be to search for a general tool that solves the problem. In this case, though, special-purpose code could exploit properties of the particular problem to be much faster.
+- The Importance of Space. Time increased substantially as we overflowed the memory at magic boundaries such as Level-2 cache size and free RAM.
+- Code tuning techniques. Replace general-purpose memory allocation with a single allocation of a large block, rewrite a recursive function to be iterative, and use sentinels.
+
+### 13.6 Problems
+1. Bob Floyd's algorithm to generate a sorted set of random integers. When all numbers are sorted, it will trigger the worst case in binary search tree.
+6. Inserting nodes in increasing order will provoke worst-case behaviro for bins and binary search tree.
+9. replace division with shifting
+    goal = n/m
+    binshift = 1
+    for (i=2; i<goal; i*=2) 
+        binshift++
+    nbins = 1 + (n>>binshift)
+    p in bin[t>>binshift]
+10. Ordered hash table: implemented by small array and linked lists.
+
+
+## Column 14: heaps
+- Sorting: heapsort never taks more than O(nlgn) time to srot an n-element array,and uses just a few words of extra space.
+- Priority Queues. Insert new elements and extract the smallest element in the set requires O(lgn) time.
+
+### 14.1 The Data Structure
+Heap properties:
+- Order: the value at any node is less than or equal to the values of the node's children This implies that the least element of the set is at the root of the tree, but it doesn't say anything about the relavtive order of left and right children.
+- Shape: Has its terminal nodes on at most two levels, with those on the bottom level as far left as possible. There is no "holes" in the tree; if it contains n nodes, no nodeis at a distance more than lgn from the root.
+
+Heaps use a one-based array; the easiest approach in C is to declare x[n+1] and waste element x[0]. The root is in x[1].
+    root = 1; value(i) = x[i]; leftchild(i)=2*i; rightchild(i)=2*i+1; parent(i)=i/2;
+In this representation, the `shape` property is guanranteed.
+for 2<=i<=n, x[i/2]<=x[i]
+
+### 14.2 Two critical functions
+siftup:
+    loop
+        /* invariant: heap(1,n) except perhaps between i and its parent */
+
+    void siftup(n)
+            pre n>0 && headp(1,n-1)
+            post heap(1,n)
+        i=n
+        loop
+        /* invariant: heap(1,n) except perhaps between i and its parent */
+            if i == 1
+                break
+            p = i/2
+            if x[p] <= x[i]
+                break
+            swap(p,i)
+            i = p
+
+Siftdown:
+    void siftdown(n)
+            pre heap(2,n) && n >= 0
+            post heap(1,n)
+        i = 1
+        loop
+            /*invariant: heap(1,n) except perhaps between i and its (0,1 or 2) children
+            c = 2*i
+            if c>n
+                break
+            /* c is the left child of i */
+            if c+1 <= n
+                /* c+1 is the right child of i */
+                if x[c+1] < x[c]
+                    c++
+            /* c is the lesser child of i */
+            if x[i] <= x[c]
+                break
+            swap(i,c)
+            i = c
+
+### 14.3 Priority Queues
+Every data structure has two sides: specification and implementation.
+"multiset" or "bag" can contain multiple copies of the same element.
+void insert(t)
+    pre |S| < maxsize
+    post current S = original S U{t}
+Extract any extreme element under a total ordering.
