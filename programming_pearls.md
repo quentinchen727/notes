@@ -1076,3 +1076,120 @@ void insert(t)
     pre |S| < maxsize
     post current S = original S U{t}
 Extract any extreme element under a total ordering.
+
+O(n^2) vs O(nlgn) when n is one million, the run times of the two are three hours and one second.
+    void insert(t)
+        if n >= maxsize
+            /* report error */
+        n++
+        x[n] = t
+        /* heap(1,n-1) */
+        siftup(n)
+        /*heap(1,n)*/
+
+code:
+    for (i=n; i>1&&x[p=i/2]>x[i];i=p) swap(p,i)
+
+    void extractmin()
+    if n<1
+        /* report error */
+    t = x[1]
+    x[1] = x[n--]
+    /* heap(2,n)*/
+    siftdown(n)
+    /* heap(1,n)*/
+    return t
+code:
+    for (i=1;(c=2*i)<=n;i=c) {
+        if (c+1<=n&&x[c+1]<x[c]) c++;
+        if (x[i]<x[c]) break;
+        swap(c,i);
+}
+
+### 14.4 A sorting algorithm
+The Heapsort algorithm is a two-stage process; the first n steps build the array into a Maxheap, and the next n stesp extract the elements in decreasing order and build the final sorted sequence, right to left.
+    | heap, <=    i| sorted, >=  |n
+   fist stage:
+    for i = [2,n] 
+        /* invariant: heap(1, i-1) */
+        siftup(i)
+        /* heap(1,i) */  // This will build up the heap in O(nlgn)
+    // While we could build a heap bottom up, merge different heaps takes O(n), as different layers of heaps takes different steps to sift down.
+    second stage:
+    for (i=n; i>=2; i--)
+        /* heap(1,i) && sorted(i+1,n) && x[1..i]<=x[i+1..n]
+        swap(1,i)
+        /*heap(2,i-1) && sorted(i,n) && x[1..i-1]<=x[i..n]
+        siftdown(i-1)
+        /* heap(1,i-1) && sorted(i,n)&& x[1..i-1]>=x[i..n]
+
+### 14.5 Principles
+- Efficiency. The shape property guarantees that all nodes in a heap are within log2n levels of the root; functions siftup and siftdown have efficient run times precisely because the trees are balanced. Heapsort avoids using extra space by overlaying two abstract structures(a heap and a sequence) in one implementatino array.
+- Correctness. To write code for a loop we first state its invariant precisely; the loop then makes progress towards termination while preserving its invariant.
+- Abstraction. Good engineers distinguish between what a component does(the abstraction seen by user) and how it does it(the implementation inside the black box).
+    - Procedural abstraction.
+    - Abstract Data types. What a data type does is given by its methods and their specifications; how it does is up to the implementation. Their implementation may, of course, have an impact on the problem's performance.
+
+### 14.6 Problems
+1.  Make the heap operation faster?
+The siftdown function can be made faster by moving the swap assignments to and from the temporary variable out of its loop. The siftup function can be made faster by moving code out of loops and by placing a sentinel element in x[0] to remove the test if i==1.
+2. Modify siftdown to have the following specification:
+    void sidtdown(l,u)
+        pre heap(l+1, u)
+        post heap(l,u)
+Build a heap in O(n)
+    for (i=n-1; i >=1; i--)
+        /Invariant: maxheap(i+1,n)*/
+        siftdown(i,n)
+        /* maxheap(i,n)*/
+Because maxheap(l,n) is true for all l>n/2, the bound n-1 in the for loop can be changed to n/2, thus O(n).
+3. Implement a heapsort to run as fast as possible.
+    for (i=n/2; i>=1; i--)
+        siftdown(i,n)
+    for (i=n;i>=2;i--)
+        swap(1,i)
+        siftdown(1,i-1)
+Its running time remains O(nlgn), but with a smaller constant than in the original heapsort.
+4. How might the heap implementation of priority queues be used to solve the following problem? How do your answer change when the inputs are sorted?
+a. Construct a Huffman code
+Extract two minimums, merge and insert into heap. If sorted, it is linear time.
+b. Compute the sumof a large set of floating point numbers.
+Sum the smallest number first.
+c. Find the million largest of a billion numbers stored on a file.
+A million minHeap to store the million largest numbers seen so far.
+d. Merge many small sorted files into none large sorted file( a disk-based merge sort)
+A heap can be used to merge sorted files by representing the next element in each file; the iterative step selects the smallest element from the heap and inserts its successor into the heap. The next element to be output from n files can be chosen in O(lgn) times.
+5. bin packing problem. assigning a set of n weights (each between zero and one ) to a mininal number of unit-capacity bins. 
+A heap-like structure is placed over the sequence of bins; each node in the heap tells the amount of space left in the least full bin among its descendants. When deciding where to place a new weight, the search goes left if it can, and right if it must; that require time proportinal to the heap's depth of O(lgn). After the weight is inserted, the path is traversed up to fix the weights in the heap.
+6. A common implementation of sequential files on disk has each block point to its successor, which may be any block. Add addiontal pointer to each node, to reduce the ith block to be read in logi.
+    void path(n)
+            pre n >= 0
+            post path to n is printed
+        if n == 0
+            print "start at 0"
+        else if even(n)
+            path(n/2)
+            print "double to ", n
+        else 
+            path(n-1)
+            print "increment to ", n
+7. On some computers the most expensive part of a binary search program is the division by 2 to find the center of the current range. Show how to replace that division with a multiplication by two, assuming that the array to be searched has been constructed properly. Given algorithms for building and search such a table.
+The modified binary search begins with i=1, and at each iteration set i to eithr 2i or 2i+1. The element x[1] contains the median, x[2] contains the first quartile, x[3] the thrid quartile, and so on. 
+Put an n-element sorted array into "heapsort" order in O(n) and O(1) extra space. to copy a sorted array a of size 2^k -1 into a "heapsearch" array b: the elements in odd position of a go, in order, into the last half of positions of b, positions congruent to 2 modulo 4 go into b's second's quarter, and so on.
+9. The simultaneous logarithmic run times of insert and extractmin in the heap implementation of priority queues are within a constant factor of optimal.
+10. The basic idea of heaps in familar to sports fans, what is the probability that the second-best player is in the champoinship match?
+1/lg(n) or 1/rounds(elimination). All the players defeated by champion could be a second best player.
+
+
+## Column 15: string of pearls
+We are surrounded by strings.
+### 15.1 Words
+Balanced search tree operate on strings as indivisible objects; these structs are used in most implementations of STL's sets and maps. They always keep the elements in sorted order, so they can efficiently perform operatoins such as finding a predecessor or reporting elements in order. Hashing, on the other hand, peeks in side the characters to compute a hash function, and then scatters keys across a big table. It is very fast on the average, but it does not offer the worst-case performance guarantees of balanced trees, or support other operatoins involving order.
+### 15.2 Phrases
+Find the longest substrings in a text
+suffix array: The pointers in the array together point to every suffix in the string.
+then sort and scan through this array comparing adjacent elemtns to find th longtest repreated string.
+It runs O(nlgn) time due tow sorting, which is much better than brute force O(n^2).
+### 15.3 Generating text
+Finte-state Markov chain with stationary transition probabilities.
+        
