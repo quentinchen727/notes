@@ -1192,4 +1192,32 @@ then sort and scan through this array comparing adjacent elemtns to find th long
 It runs O(nlgn) time due tow sorting, which is much better than brute force O(n^2).
 ### 15.3 Generating text
 Finte-state Markov chain with stationary transition probabilities.
-        
+Generate text based on the k words before it.
+Implement a suffix array pointing to the characters, except that it starts only on word boundaries.
+    word comparision:
+    int wordncomp(char *p, char *q)
+        n = k;
+        for (; *p==*q; p++, q++)
+            if (*p == 0 && --n == 0)
+                return 0
+        return *p - *q
+Then qsort;
+Generate random text:
+    phrase = first phrase in input array
+    loop
+        perform a binary search for phrase in word[0..nword-1]
+        for all phrases equal in first k words
+            select one at random, pointed to by p
+        phrase = word following p
+        if k-th word of phrase is length 0
+        break
+        print k-th workd of prase
+
+### 15.4 Principles
+- String problems.
+- Data structures for strings:
+    - Hashing: fast on the average and simple to implement.
+    - Balanced trees: guarantee good performance even on perverse inputs, and nicely packaged in most implementations of the C++ Standard Template Library's sets and maps.
+    - Suffix arrays. Initialize an array of pointers to every character(or every word) in your text, sort them, and you have a suffix array. It can be scanned or used against binary search to find words or phrases.
+- Libraries or Custom-made components. The sets, maps and strings of the C++ STL were very convevient to use, but their general and pwoerful interface meant that they were not as efficient as a special-purpose hash function.
+
