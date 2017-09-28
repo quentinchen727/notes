@@ -764,7 +764,7 @@ In quickSort, we'll partition the array x[l..u] around the value t=x[l], a will 
         /* x[l..m-1]<x[m] <= x[m+1..u] */
         qsort(l, m-1)
         qsort(m+1, u)
-This QuickSort runs in O(nlgn) time and O(lgn) stack space on the average. The lower bound that any comparison-based sort must use O(nlgn) comparisons; Quicksrot is there close to otimal.
+This QuickSort runs in O(nlgn) time and O(lgn) stack space on the average. The lower bound that any comparison-based sort must use O(nlgn) comparisons; Quicksrot is there close to optimal.
 
 ### 11.3 Better quicksorts
 If an array of n identical elements, the qsort1 function blows this case badly. Each of n-1 partitioning passese use O(n) to peel off a single element, so the total run time is O(n^2).
