@@ -53,3 +53,7 @@ for a specific use, set it in shell script and export it.
 apt-get update
 apt-get install iputils-ping
 apt-get install net-tools // install ifconfi:w
+
+## tcpdump
+tcpdump -i enp3s0f0 port 80 -nn -A -s 15000
+curl -v -X PUT -H "Authorization: Basic LnJpb3VzZXI6cm9vdHJvb3Q=" -H "X-Rio-CopyCount:1" -T tt1 http://20.0.52.47/rio/kyle/tt1
