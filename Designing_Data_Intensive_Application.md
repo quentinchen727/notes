@@ -657,3 +657,680 @@ Serializable isolation has a performance cost, and many databases don't want to 
     update xxxxx
     commit;
   3. Automatic detecting lost updates: if it detects a lost updates, the transaction manager abort it and force it to retry its cycle. It is supported by PostgreSQL, Oracle, but not by MySQL/InnoDB.
+  4. Compare-and-set
+    In database that don't provide transaction, you sometimes find an atomic compare-and-set operation. It is to avoid lost updates by allowing an update to happen only if teh value has not changed since you last read it.
+    e.g. two user modify the wiki concurrently
+    UPDATE wiki_page SET content = 'new content'
+      WHERE id = 1234 AND content = 'old content';
+    But if the database allows the WHERE clause to read from an old snapshot, this statement may not prevent lost updates, because the condition may be true even though another cocurrent write is occurring.
+  5. Confflict resolution and replication
+    Locks and comapre-and-set operations assume that there is a single up-to-date copy of the data, thus technique based on locks or compare-and-set do not apply in this context.
+    In repliated database, a common approach is to alow concurrent writes to create several conflicting versions of a value(sibling), and to use application code or special data structures to resolve and mrege these versions after thet fact.
+    Atomic operation can work well in a replicated context, especially if they are commutative, as in Riak.
+    LWW, last write wins, is prone to lost updates, which is the default in may replicated databases.
+
+- Write skew and Phantoms
+Two kinds of race conditions, dirty writes and lost updates, should be prevented either automatically by the databse, or by manual safeguard such as using locks or atomic wrie operations. Dirty write will mix up writes from different transactions. Lost update happens in read-modify-write cycle.
+More race conditions:
+    doctor oncall system, two doctors want to be off oncall at the same time. Since they are updatting two different object, it is neither a dirty write nor a lost update.
+    Write skew happens when two transactions read the same objects, and then update some of those objects.
+    Atomic single-object operations and the automatic detetion of updattes can not prevent write skew. Some databases allow you to configure constraints, but you would need a constraint that involves multiple objects. Most databases do not have built-in support for such constraints, but you may be able to implement them with triggers or materialized views.
+    If you can't use a serialized isolation level, the second-best option in this case is probably to expicitly lock the rows that transaction depends on.
+    More write skew examples: Meeting room booking system, multiplayer game, claiming a username, preventing double-spending. Those check for the absence of rows matching some serach condition, and the write adds a row matching the same condition. If the query in step 1 doesn't return any rows, SELECT FOR UPDATE can't attach locks to anything.
+    One solution is to materialize conflicts to turn a phantom into a lock conflict. But it is hard and error prone to let a concurrency control mechinism leak into the application data model.
+    A serializable isolation level is much preferable in most cases.
+
+#### Serializability
+Serializable isoatation is usually regarded as the strongest isolation level. It guarantees that even though transactions may execute in parallel, the end result is the same as if they has executed one at a time, serially, without any concurrency.
+
+***Actual Serial Execution***
+Simplest: to execute only one transaction at a time, in serial order, on a single thread.
+If multi-threaded concurrency was considered essential for getting good performance during the prevoius 30 years, two developments causes those changes: 1. Cheaper RAM; 2. OLTP only make short and small number of reads and writes, while long-running analytic queries, mostly read-only, can be run on a consistenct snapshot outside of the serial execution loop.
+It is implemented by VoldDB/H-Store, Redis, and Datomic. It can perform bettern than multi-threaded counterpart, as it avoids the overhead of locking. However, its throughput is limited to that of a single CPU core.
+
+***Encapsualting transactions in stored procedures***
+Systems with single-thread serial transaction processing don't allow interactive multi-statement transactions, which send back and forth queries and results between appliation code and the database server, causing much delay. Instead, the application must submit the entire transaction code to the database ahead of time, as a stored procedure.
+
+***Pros and Cons of stored procedures***
+Stored procedurs have existed for some time in relational database, and they have been part of the SQL standard(SQL/PSM) since 1999. 
+Cons: each database vendor has it own language for stored procedure, but they look quite ugly and archaic; code that running in a database is difficult to manage; a database is often much more performance-sensitive than an application server.
+Pros: Modern implementations of stored procedures have used existing general-purpose programming languages instead: Redis use Lua, VoltDB use Java or Groovy, Datomic uses Java or Clojure.
+VoltDB also uses stored procedures for replication.
+
+***Partitioning***
+For this single-threaded database to scale to multiple CPU cores, and multiple nodes, you can potentially partition your data, which is supported in VoltDB. Each partition can have its own transaction processing thread running independently from the others. But cross-partition trasactions have addtional coordination overhead.
+
+***Summary of serial execution***
+Constaints: 1. every transaction must be small and fast; limted to use cases where the active dataset can fit in memory; write throughput must be low enough; cross-partition transactions should be restrained.
+
+##### Two-Phase Locking(2PL)
+Two-phase locking, one widely used algorithms for serializability in database, makes the lock requirement strongre. Several transactions are allowed to concurrently read the same object as long as nobody is writing to it. But as soon as anyone wants to write an object, exculsive access is required:
+1. If transaction A has read an objet, B cannot writes to that object;
+2. If A has written an object, B cannot read that object. Reading an old version of the object, is not acceptable under 2PL.
+Snapshot isolation has the mantra `readers never block writers, and writers never block readers`, which capture the key difference between snapshot.
+2PL protects against all race conditions.
+
+***Implementation of 2PL***
+Thise first phase(whiel the transaction is executing) is when the locks are required, and the second phase(at the end of transactions) is when all the locks are released. The lock can either be in shared mode or exclusive mode. The database detects deadlocks between transactions.
+
+The big downside of 2PL is performance due to reduced concurrency mostly and also locking overheads.
+
+***Predicate Locks***
+Predicate locks works similarly to the shared/exclusive lock, but rather than belonging to a particular object, it belongs to all objects that match some search conditions.
+Or index-ranged locks because predicate locks do not perform well.
+
+##### Promising: SSI, serializable snapshot isolation(SSI), which provides full serializablity but only has a small performace penalty.
+  Compared to 2PL, the big advantage of serializable snapshot isolation is that one transaction doesn't need to block waiting for locks held by another transaction. Loke wunder snapshot isolation, writers don't block readers, and vice versa.
+Implemented by PostgreSQL in single-node mode and by FoundationDB in distributed mode.
+  Compared to serilal execution, it is not limted to the throughput of a single CPU core.
+The rate of aborts significantly affects the overall performance of SSI.
+
+Pessimestic versus optimisti concurrency control
+Pessimestic: serial excution and 2PL
+Optimistic: SSI
+
+##### Decision based on an outdated premise
+1. Detecting reads of a stale MVCC object version(uncommitted write occurred before the read)
+2. Detecting writes that affect prior reads.
+
+####Summary
+Transactions are an abstract layer that allows an application to pretend that certain concurrency problems and certain kinds of hardware and software faults don't exist.
+- Dirty reads: one client reads another client's writes before they have been committed. The read committed isolation level and stronger levels prevent dirty reads.
+- Dirty writes: one client overwrites data that another client has written, but not yet committed. Almost all transaction implementations prevent dirty writes.
+- Read skew(nonrepeatable reads): A client sees different parts of the database at different points in time. This issue is most commonly prevented with snapshot isolation, which allows a transaction to read from a consistent snapshot at one point in time. It is usually implemented with multi-version concurrency control.
+- Lost updates: Two clients concurrency perform a read-modify-write cycle. One overwrites the other's write without incorpoarting its changes, so data is lost. Some implementations of snapshot isolation prevent this anomaly automatically, while others require a manual lock(SELECT FOR UPDATE).
+- Write skew: a transaction reads something, makes a decision based on the value it saw, and writes the decision to the database. However, by the time the writes is made, the premise of the decision is no longer true. Only serilazable isolation prevents this anomaly.
+- Phantom reads: a transaction reads objects that match some search condition. Another client makes a write affects the result of that search. Snapshot isolation prevents straightforward phantom reads, but phantoms in the context of write skew requires special treament, such as index-ranged locks.
+
+Weak isolation levels protect against some of the anomalies but leave you, the application developer, to handle other manually. Only serializable isolation protects all of these issues. 
+- Literally exectuting transaction in a serial order
+  If you can make each transaction very fast to execute, and the transaction throughput is low engough to process on a single CPU core, this is a simple and effective option.
+- Two-phase locking
+  For decades, this has been the standard way of implementing serializability, but many application avoid using it because of its performance characteristics.
+- Serializable snapshot isolation(SSI)
+  A fairly new algorithm that avoids most of the downsides of the previous approaches. It uses an optimistic approach, allowing transactions to proceed without blocking. Whena transaction wants to commit, and it is aborted if the execution was not serializable.
+
+
+
+### Chapter 8. The Trouble With Distributed Systems
+Working with distributed systems is fundamentally different from writing software on a single computer.
+
+***Faults and partial failures***
+The operation on a single compute is always `deterministic`: either is works or it doesn't.
+In a distributed system, there may well be some parts of the system that are broken in some unpredictable way, even though some other parts of the system are working fine. This is known as `partial failure`, which is `nondeterministic`.
+This nondeterminism and possibility of partial failures is what makes distributed systems hard to work with.
+
+***Cloud computing and Supercomputing***
+Large-scale computing systems:
+- high-performance computing: for computationally intensive scientific computing tasks, such as weather forcasting or molecular dynamics.
+- cloud computing: multi-tenant datacenters. Commodity computers connected with an IP network, elastic resource allocation, and metered billing.
+
+If we want to make distributed systems work, we must accept the possibility of partial failure and build fault-tolerance mechanisms into the software. In other words, we need to build a reliable system from unreliable components.
+
+***Unreliable Networks***
+***Detecting Faults***
+***Timeouts and Unbounded delays***
+***Network congestions and queuing***
+Rather than using configured constant timeouts, system can continually measure response times and their variability(jitter), and automatically adjust timeouts according to the observed response time distribution. This can be done with a Phi Accrual failure detector, which is used in Akka and Cassandra.
+
+***Synchronous vs Asynchonous networks***
+Bounded delay in telephony networks, using dedicated circuits.
+Datacenter networks and the internet are optimized for bursty traffic, not suitable for packet switching. 
+ATM: a hybrid networks that support both circuit switching and packet switching.
+With Qos and admisson control,it is possible to simulate circuit switching on packet networks.
+
+***Unreliable clocks***
+Monotonic vs time-of-day clocks
+Clock synchronization and accuracy
+Relying on Synchrnoized clocks: if you use software that requires synchronized clocks, it is essential tht you alos carefully monitor the clock offsets between all the machines. Such monitoring ensures that you notice the broken clocks before they can cause too much damage.
+
+***Timestamps for ordering events***
+LLW(last write wins) is widely used in both multi-leader replication and leaderless databases such as Cassandra and Riak. Some implementations generate timestamps on the client rathern than the server, bu tthis doesn't change the fundamental problem with LLW: database writes can disappear; LWW cannot distinguish between writes sequential and concurrent; two nodes generate writes with the same timestamp. 
+NTP's synchronization accuracy is limited by the network round-trip time, in addition to other sources of error such as quartz drift.
+
+Logical clocks: base on incrementing counters rather than an oscillating quartz crystal, a safer alternative for ordering events.
+
+***Clock readings have a confidence interval***
+[earliest, latest]
+
+Synchronized clocks for global snapshots
+If two intervals do not overlap, we are sure the causality between them. Google Spanner deploys a GPS receiver or atomic clock in each datacenter, allowing clocks to be synchronized to within 7 ms.
+
+#####Process Pauses
+A node in a distributed system must assume that its execution can be paused for a significant length of time at any point, even in the middle of a function. During the pause, the rest of the world keeps moving and may even declare the paused node dead because it's not responding.
+e.g.: garbage collector, virtual machine suspension, context switch, page fault and thrashing, disk I/O, system signal;
+
+***Response time guarantee***
+Hard real-time systems: must meet the deadline, such as aircraft, rocket, robots, cars.
+Providing real-time guarantees in a system requires support from all levels of the software stack and is quite expensive.
+
+***Limiting the impact of garbage collection***
+1. treat GC pauses like brief planned outages of a node.
+2. or use the GC only for short-lived objects and to restart processes periodically.
+
+####Knowledge, Truth, and Lies
+
+##### The truth is defined by the majority
+Many distributed algorithms rely on a quorum: decisions require some minimum number of votes from several nodes in order to reduce dependence on any one particular node.
+
+***The leader and the lock***
+only one of some thing, e.g.:
+1. one leader for a database partition
+2. only one transaction for clients to hold the lock
+3. only one user to register a particular username.
+
+Use a fencing token: checking a token on the server side and rejecting older token.
+
+A system is Byzantine fault-tolerant if it continues to operate correctly even if some of the nodes are malfunctioning and not obeying the protocol, or if malicous attackers are interfering with the network. Protocols for making systems Byzantine fault-tolerant are quite complicated, and fault-tolerant embedded system rely on support from the hardware level.
+
+#### System Model and Reality
+System model: an abstraction that describes what things an algorithm may assume
+1. synchronous model: not a realistic model of most practical systems
+2. partially synchronous model: realistic model of many systems
+3. asynchronous model
+
+Node failures:
+1. Crash-stop
+2. Crash-recovery
+3. Byzatine faults
+
+The partial synchronous model with crash-recovery faults is the most useful one.
+
+Correctness of algorithms:
+Safety property is defined as `nothing bad happens`; liveness as`something good eventually happens`.
+
+Theoretical analysis and empirical testing are equally important.
+
+####Summary
+Reason to use a distributed system: scalability, fault-tolerant, and low latency.
+
+
+### Chapter 9. Consistency and Consensus
+
+Consistency Guarantees
+Most replicated databases provide at least eventual consistency, which means if you stop writing to the database and wait for some unspecified length of time, then eventually all read requests will return the same value. Or we call it `convergence`.
+
+A database looks superfically like a variable that you can read and write, but i fact it has much more complicatd sematics.
+The edge cases of eventual consistency only become apparent when there is a fault in the system or at high concurrency.
+
+Transaction isolation is primarily about avoiding race conditions due to concurrently executing transactions, whereas distributed consistency is mostly about coordinating the state of replicas in the face of delays and faults.
+
+####Linearizablity
+also known as atomic consistency, strong consistency, or immediate consistency, external conistency.
+Linearizablity is a `recency guarantee`.
+
+#####What makes a system linearizable?
+To make a system appear as if there is only a single copy of the data.
+
+register: it could be a key in a key-value store, one row in a relational database, or one document in a document database.
+
+It is possible to test whether a system's behaviro is linearizable by recording the timings of all requests and response, and checking whether they can be arranged intoa valid sequential order.
+
+A database may provide both serializability and linearizablity, and this combination is know as strict serializability or strong one-copy serializability. Implementations of serializability based on 2PL or actual serial execution are typically linearizable. However, serializable snapshot isolation is not linearizable.
+
+Locking and leader election
+Coordination services like Apache ZooKeeper and etcd are often used to implement distributed locks and leader election. Libraries like Apache Curator help yb providing higer-level recipes on top of ZooKeepter. A linearizable storage service is the basic foundation for these coordination tasks.
+
+Constraints and uniqueness guarantees require linearizability, such as username, bank balance, seat occupancy.
+
+Cross-channel timing dependencies will result in inconsistency.
+
+Replication method:
+1. Singler-leader replication(potentially linearizability)
+2. Consensus algorithms(linearizable)
+3. Multi-leader replication(not linearizable)
+4. Leaderless replication(probably not linearizable)
+
+#####The cost of linearizability
+A network interrruption forces a choice between linearizability and availability
+
+The CAP Theorem
+A better way of phrasing CAP would be either Consistent or Available when Partitioned.
+CAP only considers one consistency model(namely linearizability) and one kind of fault(network partitions). It doesn't say anything about network delays, dead nodes, or other trade-offs. Thus, although CAP has been historically influential,it has littel practical value for designing systems.
+
+Many distributed database choose not to provide linearizable guarantee primarily to increase performance, not so much for fault tolerance.
+
+If your application requires linearizability, and some replicas are disconnected from the other replicas are disconnected from the other replicas due to a network problem, then some replicas cannot process requests while they are disconnected: they must either until the network problem is fixed, or return an error.
+
+If your application does not require linearizablity, then it can be written in a way that each replicas can process requests independently, even if it is disconnect from other replicas. In this case, this application can remain available in the face of network problem, but its behavior is not linearizable.
+
+####Ordering Guarantees
+There are deep connections between ordering, linearizability, and consensus.
+
+Ordering and causality
+If a system obeys the ordering imposed by causality, we say that it is `causally consistent`.
+
+The causal order is not a total order
+A `total order` allows any two elements to b compared, so if you have two elements, you can always say which one is greater and which one is smaller.
+for example, mathematical sets are not totally ordered: is {a,b} greater than {b,c}? Mathematical sets are partially ordered.
+
+Different database consistency models:
+- Linearizability: total order. No concurrency.
+- Causality: two operations are concurrent if neither happened before the other. Causality defines a partial order.
+
+Linearizablity is stronger than causal consistency
+A system can be causally consistent without incurring the performance hit of making it linearizable(in particular, the CAP theorem does not apply). In fact, causal consistency is the strongest possible consistency model that does not slow down due to network delays, and remains available in the face of network failures. Causal consistency is quite recent, and not much of it has yet made its way into production systems.
+
+Capturing causal dependencies
+Sequence number ordering: create sequence numbers in a total order that is consistent with causality. Such a total order captures all the causality information, but also imposes more ordering thatn strictly required by causality. In a single-leader database, the leader can simply increment a counter for each operation.
+
+Noncausal sequence number generator: 
+In multi-leader or leaderless database, use even/odd sequence numbers or attach timestamps or preallocate bolcks of sequence numbers.
+
+#####Lamport timestamps
+The lamport timestamp is simply a pair of (counter, node ID). Two nodes may sometimes have the same counter value, but by including the node ID in the timestamp, each teimstamp is made unique. Every node and client keeps track of the maximum counter value it has seen so far, and includes the maximum on every request. When a node receives a request or response with a maximum counter value greater than its own counter value, it immediately increase its counter to that maximum. But ordering ---> increase of lamport timestamp, while increase of lamport timestamp cannot -----> ordering.
+
+Lamport timestamp is not sufficient.
+
+####Total Order Broadcast
+Total order broadcast requires two safety properties:
+1. Reliable delivery:
+   No messages are lost: if a message is delivered to one node, it is delivered to all nodes.
+2. Totally ordered delivery
+  Messages are delivered to every node in the same order.
+
+Using Total order broadcast
+Consensus service such as ZooKeeper and etcd actually implement total order broadcast.
+
+State machine replication for each database replcation.
+
+Implementing linearizable storage using toal order broadcast
+Total order broadcast is asynchronous: messages are guaranteed to be delivered in a fixed order, but there is no guarantee about when a message can be delivered(replication lag). By contrast, linearizablity is a recency guarantee: a read is guaranteed to see the latest value written.
+
+####Distributed Transactions and Consensus
+Goal: get several nodes to agree on something.
+Situation in which it is important to agree on:
+1. leader election: no split brain in a single-leader database.
+2. Atomic commit: in the event that a transaction may fail on some nodes but succeed on others, we have to get all nodes to agree on the outsome of the transaction: either they all abort/roll back or they all commit.
+
+FLP result: there is no algorithm that is always able to reach consensus if there is a risk that a node may crash. The predicate is that a determinstic algorithm cannot use any clocks or timeout in the asynchronous system model.
+However, distributed systems can usually achieve consensus in practice.
+    
+#####Atomic comit and two-phase commit(2PC)
+Atomicity prevents failed transactions from littering the database with half-finished results and half-updated objects.
+On a single node, write data and commit. It is a single node that makes the commit atomic.
+As for mulitple nodes involved in a transaction, most "NoSQL" distributed stores do not support such distributed transactions, but various clustered relational systems do.
+
+A transaction commit must be irrevocable, which forms the basis of `read committed`.
+2PC uses a coordinator, which is often implemented as a library or a seperate process or service, such as Java EE container, Narayan, JOTM, BTM, or MSDTC. The coordinator sends a 'prepare' request to all participants, waits for acks, then send a `commit` request, then waits for acks.
+1. when the application wants to begin a transaction, it requests a transaction ID from the coordinator.
+2. The application begins a single-node transaction on each of the participants and attaches the globally unique xid. if anythiing goes wrong in this stage, the coordinator or any of the participants can abort.
+3. Once the application is read to commit, the coordinator send a prepare request to all participants. If any filas or times out, the coordinator sends an abort request for that xid to all participants.
+4. When a participants receives the prepare request, it makes sure that it can definitely commit the transaction under all circumstances. The participant surrenders the right to abort the transaction, but without actually committing it.
+5. When the coordinator has recieves responses to all prepare requests, it makes a denitive decision. This is called the commit point.
+6. Once the decision has ben written to disk, the commit or abort request is sent to all participants. If this request fails or timeout, the coordinator must retry forever until it succeeds.
+
+Coordinator failure: the commit point of 2PC comes down to a regular single-node atomic commit on the coordinator. The coordinator must writes its commit or abort decision to a transaction log on disk before sending it to participants.
+
+***In practice***, distributed transactions provides an important safety guarantee, but are criticized for causing operational problems, killing performance. Many cloud services hoose not to implement it.
+
+Two different types of distributed transactions:
+1. Database-internal distributed transactions: MySQL
+2. Heterogeneous distributed transactions
+
+Exactly-once message processing requires all systems affected by the transaction are able to use the same atomic commit protocol. e.g. message broker + atomic distributed transaction
+
+XA transactions: eXtended Architecure is a standard for implementing two-phase commit across heterogeneous technologies.
+
+Holding locks in doubt: database transaction usually take a row-level exclusive lock on any rows they modify. In serializable isolation, a database using 2PL also have to take a shared lock on any rows read by the transaction.
+
+Recovering from coordinator failure
+Orphaned in-doubt transaction will block for ever, so it needs manual intervention.
+Many XA implementation have an emergency escape hatch called heuristic decision for probaly breaking atomicity.
+
+####Fault-tolerant consensus
+A consensu algorithm must satisfy the following properties:
+1. Uniform agreement: No two nodes decide differently.
+2. Integrity: No node decides twice.
+3. validity: if a node decides value, then v was proposed by some node.
+4. termination: every node that does not crash eventually decides some value.RES
+
+The best-known fault-tolerant consensus algorithm are Viewstamped Replication(VSR), Paxos, Raft, and Zab. Most of these algorithms decide on a sequence of values.
+
+Epoch numbering and quorums
+for the uniqueness of the leader, all of the consensus protocls make a weaker guarantee: they define an epoch number and guarantee that within each epoch, the leader is unique. Each election is given an incremented epoch number. Two rounds of voting: once to choose a leader, and a second time to vote on a leader's proposal.
+
+Limitation of consensus:
+1. weaker performance
+2. require a strict majority to operate
+3. static membership
+4. in case of highly variable network delays, frequent leader elections.
+
+####Membership and Coordination services
+ZooKeeper or etcd are often described as "distributed key-value stores" or "coordination and configuration services". HBase, Hadoop YARN, OpenStack Nova, and Kafaka all rely on ZooKeeper running in the background.
+ZooKeeper is modeled after Google's Chubby lock service.
+ZooKeeper and etcd are designed to hold small amounts of data that can fit entirely in memory. That small amount of data is replicated across all the nodes using a fault-tolerant total order broadcast algorithm.
+Additional features of ZooKeeper:
+1. Linearizble atomic operations: a distributed lock is implemented as a `lease`.
+2. Total ordering of operations
+3. Failure detection: heartbeats between clients and servers.
+4. Change notifications
+
+Assigning partitioned resource to nodes can be achieved in ZooKeeper. Apache Curator provides higher-level tools on top of ZooKeeper.
+The kind of data managed by ZooKeeper is quite slow-changing. If appliation state needs to be replicated from one node to another, other tools (such as Apache BookKeeper) can be used.
+
+Service discovery
+ZooKeeper, etcd, and Consul are also often used for `service discovery` to find out which IP addresses you need to connect to in order to reach a particular service.
+
+Membership services: it determines which nodes are currently active and live member of a cluster.
+
+####Summary
+Linearizability: makes a database behave like a variable in a single-threaded program, although being slow. All operations in a single, totally ordered timeline.
+Causality: weaker consistency, some things can be concurrent.
+
+Consensus equivlance:
+1. linearizable compare-and-set registers
+2. atomic transaction commit
+3. total order broadcast
+4. locks and lease
+5. membership/coordination service
+6. Uniqueness constraint
+
+If the single leader fails,
+1. wait for it to recover
+2. manually choose a new leader;
+3. use an algorithm to automatically choose a new one.
+
+## Part 3. Derived Data
+On a high level, systems that store and process data can be grouped into two broad categories:
+1. Systems of record, or source of truth:
+   It holds the authoritative version of your data, like user input. each fact is represented exactly once and normalized.
+2. Derived data systems
+  Data ins a derived system is the result of taking some existing data from another system and transforming or processing it in some way, such as cache, summary data.
+Derived data is redundant and denormalized.
+The distinction between system of record and derived data systm depends not on the tool, but on how you use it in your application.
+
+###Chapter 10. Batching Processing
+Three types of systems:
+1. Services(online systems)
+  A service waits for a request from a client to arrive and handle it ASAP. Metrics: response time and availability.
+2. Batch processing systems(offline systems)
+  It takes a large amount of input data, runs a job to process it, and produces some output data. Metrics: throughput
+3. Stream processing system(near-real-time systems)
+Some where between online and offline/batch processing.
+
+MapReduce, a batch processing algorithm published in 2004, was implemented in Hadoop, CouchDB, and MongoDB.
+
+####Batch processing with unix tools
+Mergesort has sequential access pattern that perform well on disks. The sort utility in GNU automatically handles large-than-memory datasets by spilling to disk, and automatically parallelize sorting across multiple CPU cores. This means that the simple chain of Unix commands scale to large datasets, without running out of memory. The bottleneck is the disk read rate.
+
+The Unix philosophy:
+1. Make each program do one thing well. To do a new job, build afresh rather than complicate old programs by adding new "features".
+2. Expect the output of every program to become the input to another, as yet unknown, program. Don't clutter output with extraneous information. Avoid stringently columnar or binary input formats. Don't insist on interactive input.
+3. Design and build software, even operating systems, to be tried early, ideally within weeks. Don't hesitate to throw away the clumsy parts and rebuild them.
+4. Use tools in preference to unskilled help to lighten a programming task, even if you have to detour to build the tools and expect to throw some of them out after you've finished using them.
+Automation, rapid prototying, incremental iteration, being friendly to experimentation, breaking down large projects into manageable chunks.
+
+***A uniform interface***
+In Unix, that interface is a file, an ordered sequence of bytes.
+
+***Seperation of logic and wiring***
+Seperating the input/output wiring from the program logic makes it easier to compose small tools into bigger systems.
+
+***Transparency and experimentation***
+Unix makes it easy to see what is going on:
+1. the input files to Unix commands are treated as immutable.
+2. You can end the pipeline at any point.
+3. You can write the output of one pipeline stage to a file and use that file as input to the next stage. This allows you to restart the later stage without rerunning the entire pipeline.
+
+####MapReduce and Distributed Filesystems
+The biggest limitation of Unix tools is that they run only on a single machine-and that's where tools like Hadoop come in.
+
+MapReduce is a bit like Unix tools, but distributed across potentially thousands of machines.
+MapReduce jobs read and write files on a distributed filesystem. In Hadoop's implementation of MapReduce, that filesystem is called HDFS, an opensource reimplementation of the Google File System(GFS).
+Various distributed file systems: HDFS, GlusterFS, Quantcast File system, Amazon S3, Azure Blob Storage, OpenStack Swift.
+HDFS is based on `shared-nothing`, in contrast to the shared-disk approach of Network Attached Storage(NAS) and Storage Area Network(SAN) architectures. Shared-disk stoage is implemented by a centralized storage application, often using custom hardware and special network infrastructure such as Fibre Channel. The share-nothing approach requries no special hardware, only computers connected by a conventional datacenter network.
+
+HDFS consists of a daemon process running on each machine, exposing a network service that allow other nodes to access files stored on that machine. A central server called the `NameNode` keeps track of which file blocks are stored on which machine. File blocks are replicated on multiple machines. No special hardware in HDFS.
+
+MapReduce Job Execution
+1. read a set of input files, and break it up into records;
+2. call mapper function to extract a key and value form each iput record; awk
+3. sort all of the key-value pairs by key. sort
+4. call the reducer function to iterate over the sorted key-value pairs. uniq
+map and reduce are where you write you own data processing code.
+
+distributed execution of mapreduce
+The mapper and reducer only operate on one record at a time; the framework can handle the complexities of moving data between machines.
+In Hadoop MapReduce, the mapper and reducer are each a Java class that implements a particular interface. In MongoDB and CouchDB, mappers and reducers are javascript functions.
+
+The input to a job is typically a directory in HDFS, and each file or file block within the input directory is a seperate partition that can be processed by a separate map task.
+The MapReducer scheduler tries to put the compuation near the data, that is to run each mapper on machines taht has a replicas of the input file.
+Each map task partitions its output by reducer, based on the hash of the key.
+The process of partitioning by reducer, sorting, and copying data partitions from mappers to reducers is known as shuffle.
+The reducer task takes the files from the mappers and merges them together, preserving the sort sort.
+
+***MapReduce workflow***
+Chain mapreduce jobs into workflow.
+To handle thses dependencies between job executions, various workflow scheduler for Hadoop have been developed, including Oozie, Azkaban, Luigi, Airflow, and Pinball.
+Higher-level tools for Hadoop, such as Pig, Hive, Cascading, Crunch, and FlumeJava set up workflows of multiple MapReduce stages.
+
+***Reduce-Side Joins and Grouping***
+To analyze the clickstream data, take a copy of the user database and put it in the same distributed filesystem as the log of user activity events. Have the user databse in one sef of files and the user activity records in another set of files.
+
+Sort-Merge Joins
+One set of mappers would go over the activity events(extracting the user ID as the key and the activity event as the value), while another set of mapper would go over teh user database(extracting the user ID as the key and the user's date of birth as the value). The MapReduce framework partitions the mapper output by key and then sorts the key-value pair, which group all the activity events and the user record with the same user ID adjacently. The reducer can then perform the actual join logic easily.
+
+Group By
+Set up the mappers so that the key-value pairs use the desired grouping key.
+
+Handling skew
+A small number of celebrities may have many millions of followers, and such disproportionately active database records are known as linchpin objects or hot keys.
+Collecting all activity related to a celebrity in a single reducer can leader to significant skew(hot spots). To compensate it, Pig runs a simpleing job to determine hot keys, and mapper send any records relating to a hot key to one of several reducers. Or specify the hot key explicitly.
+
+***Map-Side Joins*** It makes assumptions about the size, sorting, and paritionning of input datasets.
+1. Broadcast hash joins: load the samll join input into an in-memory hash table or sotre the small join input in a read-only index on the local disk. 
+2. partitoined hash joins: Bucketed map joins
+3. Map-side merge joins
+
+***The output of batch workflows***
+It is closer to analytics, but it is not a report, but some kind of structure.
+Hadoop MapReduce helps build search indexes, e.g., Lucene/Solr.
+Another common use for batch processing is to build machine learning systems such as classifiers and recommendation systems. The output of those batch jobs is often some kind of database.
+Build a brand-new database inside the batch job and write it as files to the job's output directory in the distributed filesystem. Those data files are then immutable once written, and can be loaded in bulk into servers that handle read-only queries. Various key-value store support building database files in MapReduce jobs, including Voldermort, Terrapin, ElephantDB, and HBase bulk loading.
+
+***Philosophy of batch process outputs***
+Encourage experiments by leaving input unchanged;
+Ease of rolling back;
+fault-tolerant;
+separate logic from wiring.
+But Hadoop uses more structured file formats: Avro, Parquet.
+
+Comparing Hadoop to Distributed database
+Hadoop provides someting much more like a general-purpose operating system that can run aribitrary programs.
+Hadoop opened up the possibility of indiscriminately dumping data into HDFS, and only later figuring out how to process it further.
+`sushi principle`: raw data is better.
+
+Hadoop has often been used for implementing ETL process: data from transaction processing systems is dumped into the distributed filesystem in some raw form, and then MapReduce jobs are written to clean up that data, transform it into a relational form, and import it into an MPP data warehouse for analytic purposes.
+
+The Hadoop ecosystem includes both random-access OLTP daabases such as HBase and MPP-style analytic databases such as Impala. Neither uses mapReduce, but both use HDFS for storage.
+
+On top of MapReduce: Hive, Pig, Cascading, Crunch
+
+***Materilzation of Intermediate State***
+MapReduce's approach of fully materializing intermediate state has downsides compared to Unix pipes:
+1. A MapReduce job can only start when all tasks in the preceding jobs are done, whereas processes connected by a Unix pipe are started at the same time.
+2. Mappers are often reduandant
+3. Sotring intermediate state in a distributed filesystem means replication over several nodes, which is overkill.
+
+DataFlow Engines: Spark, Tez, and Flink.
+Use dataflow engines to implement the same computations as MapReduce workflow, and they are significantly faster. Operators are a generalization of map and reduce.
+Workflows implemented in Pig, Hive, or Cascading can be switched from MapReduce to Tez or Spark with a simple configuration change.
+
+Fault tolerant: whether operators are deterministic.
+
+#####Graphs and Iterative processing
+Not suitable with MapReduce.
+
+#####Pregel: parallizing graph algorithm
+
+####Summary
+in Unix, the uniform interface is files and pipes; in MapReduce, that interface is a distributed filesystem.
+Crucially, the input data is bounded: it has a known, fixed size and so a job eventually will be done.
+
+
+###Chapter 11. Stream Processing
+Stream: data that is incrementally made available over time, e.g., stdin and stdout of Unix, programming languages(lazy list), filesystem APIs(java's FileInputStream), TCP connection, delivering audio and video over the internet.
+
+####Transimitting Event Streams
+In a stream processing context, a record is more commonly known as an event. An event usually contains a timestamp.
+An event is generated once bya producer, and the potentially processed by multiple consumers. In a filesystem, a filename identifies a set of related records; in a streaming system, related events are grouped together into a topic or a stream.
+
+Databases do not support notification mechanism very well: triggers is somewhat of an afterthought. Polling is expensive in database for continual processing with low delays.
+
+***Message Systems***
+Publish/subscribe model:
+questions:
+1. what happens if producers send messages faster than the consumers can process?
+    - drop
+    - buffer message in a queue
+    - apply backpressure or flow control, i.e., blocking the producer from sending more
+Unix pipes and TCP use backpressure: when a small fixed-size buffer fills up, the sender is blocked.
+2. What happens if nodes crash or temporarily go offline?
+Whether message loss is acceptable depends on the application.
+
+Direct Messaging from producer to consumers:
+1. UDP multicast: application-level protocols can recover lost packets.
+2. Brokerless messaging libraries: ZeroMQ, nanomsg over TCP or IP multicast
+3. statsD and Brubeck use unreliable UDP messaging for collecting metrics
+4. If the consumer exposes a service on the network, producers can make a direct HTTP or RPC request to push messages to the consumer. This is the idea behind webhooks, a pattern in which a callback URL of one service is registered with another serice, and it makes a request to that URL whenever an event occurs.
+Downsides: if the producer breaks down, it loses all the messages in the buffer.
+
+Message Brokers/ message queue
+It is essentially a kind of database that is optimized for handling message streams.
+It runs a server, with producers and consumers connecting to it as clients.
+Message brokers can keep messages in memory or write them to disk, maybe depending on the configuration.
+A consequence of queuing is asynchonous consumers.
+
+Message brokers compared to databases:
+1. database keep data until it is explicitly deleted; most message brokers delete a message when it has been succesfully delivered to its consumers.
+2. message brokers assume their working set is fairly small.
+3. databases support secondary indexes and other ways of searching for data; message borkers support subscribing to a subset of topics matching some pattern.
+4. when querying a database, the result is based on a point-in-time snapshot; message brokers do not support arbitrary queries, but they do notify clients of the changes.
+Message broker standard: JMS and AMQP. 
+Implementation: RabbitMQ, ActiveMQ, HornetQ, Qpid, TIBCO Enterprise Message Service, IBM MQ, Azure Service Bus, and Google Cloud Pub/Sub.
+
+Multiple consumers:
+two patterns:
+1. load balancing
+   Each message is delivered to just one consumer.
+   useful when the messages are expensive to process
+2. Fan-out
+   Each message is delivered to all consumers.
+   Each message is delivered to all of the consumers.
+The two patterns can be combined.
+
+Acknowledgements and redelivery
+To prevent loss of a message, message brokers use acks.
+
+#####Partitioned Log
+Using Logs for mesage storage
+A producer sends a message by appending it to the end of the log, and a consumer receive message by reading the log sequentially.
+Apache Kafka, Amazon Kinesis Stream, and Twitter's DistributedLOg are log-based message brokers tha work like this.
+The JMS/AMQP broker is preferble with regards to performance, whereas the log-based one works very well for message with strict ordering requirement.
+
+When consumers cannot keep up with producers:
+Monitor how far a consumer fall behind the head of the log. As the buffer is large, there is enough time for a human operator to intervene.
+
+Replaying old messages
+
+####Database and Stream
+
+Keep systems in sync
+Keep in sync between OLTP, cache, a full-text index, and a data warehouse.
+
+Change data capture: taking data in the order it was written to one database, and applying the changes to other systems in the same order. LinkedIn's Databus, Facebook's Wormhole parse the replication logs.
+
+Log compaction is supported by Apache Kafka, and it allows the message broker to be used for durable storage, not just for transient messaging.
+
+API support for change streams
+Database are beginning to support change streams as a first-class interface.
+
+Event sourcing
+
+State, streams, and immutability
+
+Advantages of immutable events:
+Auditability, more information than just the current state.
+
+Derving several views from the same event log:
+It is entrely reasonable to denormalize data in the read-optimized views, as the translation process gives you a mechanism for keeping it consistent with the event log.
+
+concurrency control
+
+Limitation of immutability
+Deletion is matter of "making it harder to retrieve data" than actually "making it impossible to retrieve data".
+
+####Processing Streams
+Three options:
+1. write it to a database, cache, search index or similar storage system.
+2. push to users.
+3. produce one or more output streams.
+
+Stream processing has long been used for monitoring purposes.
+
+Complex event processing:
+CEP engines reverse the roles of queries and data: queries are long-term, whereas data keep flowing.
+
+Stream Analytics: oriented toward aggregations and statistical metrics over a large number of events. Apache Storm, Spark streaming, Kafka Streams, Google Cloud Dataflow and Azure Stream Analytics.
+The time interval over which you aggregate is known as a `window`.
+
+Maintaining materialized views
+
+Search on streams:
+full-text search queries: Elasticsearch
+
+Message passing and RPC
+
+***Reasoning about time***
+event time vs processing time
+
+Whose clock are you using?
+
+Types of windows:
+1. Tumbling window: |   |   |
+2. Hopping window: overlap: | |   | |
+3. sliding window: ||   ||, keeping a buffer of events sorted by time and removing old events when they expire from the window.
+4. session window: for the same user
+
+Stream joins:
+1. stream-stream joins (window join)
+  Searched-for URL, click-through join.
+2. stream-table join(stream enrichment)
+3. table-table join(materialized view maintenance)
+
+Fault tolerance
+1. microbatching and checkpointing
+2. atomic commit revistied: amortize
+3. Idempotence
+4. rebuilding state after a failure
+
+####summary
+Message brokers:
+1. AMQP/JMS-style message broker
+2. Log-based message broker
+
+
+### Chapter 12. The future of data systems
+How to create applications and systems that are reliable, scalable, and maintainable.
+
+####Data Integration
+The most appropriate choice of software tool also depends on the circumstances. Every piece of software, even a so-called "general-purpose" database, is designed for a particular usage pattern.
+
+combing specialized tools by deriving data
+
+reasoning about dataflows
+
+derived data vs distributed transactions
+
+the limits of total ordering
+
+ordering events to capture causality
+
+reprocessing data for application evolution
+
+The lambda architecture
+
+Echo chamber
+
+Surveillance

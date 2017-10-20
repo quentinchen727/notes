@@ -28,7 +28,7 @@
         - const Declarations in loops:
             it cannot change loop variables in the normal loop as it tries to increment or decrement loop variable;
             but it can in for-in or for-of loop, as it creates a new binding in each iteration.
-        - Global bock Binding:
+        - Global block Binding:
             a new let declaration for RegExp creates a bindings that shadows the global RegExp
                 let RegExp = "hi";
                 window.RegExp !=== RegExp;
