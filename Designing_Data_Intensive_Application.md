@@ -195,7 +195,7 @@ Sorted String Table: the sequence of key-value pair is sorted by key and no dupl
 Advantages:
 1. Mergeing segments is simple and efficient, as they are sorted by keys, using mergingSort.
 2. no longer need to keep an index of all keys in memory. Just need an in-memory index to tell you the offsets for some of the keys, but it can be sparse.
-3. It is possible togroup a range of records into a block and compress it before writing it to disk. It can save disk space and reduce I/O bandwidth use.
+3. It is possible to group a range of records into a block and compress it before writing it to disk. It can save disk space and reduce I/O bandwidth use.
 
 #### Constructing and Maintaining SStables
 Maintaining a sorted structure on disk is possible(B Trees), but maintaining it in memory is much easier(AVL or red-black trees).

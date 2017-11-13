@@ -906,12 +906,6 @@ In general, two balls are likely to share one of n urns if there are O(sqrt(n)) 
         with probability 1.0/++i
             choice = this iput line
     print choice
-10. How would you select one of n objects at random, where you see the objects sequentitally but you don't know the value of n beofrehand?
-    i = 0
-    while more input lines
-        with probability 1.0/++i
-            choice = this iput line
-    print choice
 11. A promotional game consists of a card containing 16 spots, which hide a random permutation of the integers 1..16. The player rubs the dots off the card to expoese the hidden integers. If the integers 3 is ever expoese then the card loses; if 1 and 2 are both revealed then the card wins. Describe the probablity thatn randomly choosing a sequence of spots wins the game.
 4..16 are irrelevant. We just need to consider 1..3, only if 3 is the last one of three, we will win, so the probability is 1/3. Don't be misled by the statement, Don't use computer just because it is available.
 
