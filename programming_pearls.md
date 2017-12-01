@@ -778,7 +778,7 @@ Stop each scan on equal elements, and swap them.
         loop
             do i++ while i<=u && x[i]< t
             do j-- while x[j]>t
-            if i > j
+            if i >= j
                 break
             swap(i,j)
         swap(l, j)
