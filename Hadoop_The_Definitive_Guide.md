@@ -97,3 +97,89 @@ Combiner function can be sued to minimize the data transferred between map and r
 * Hadoop Streaming *
 Hadoop provides an API to MapReduce that allows you to use languages other than java to write your map and reducer functions. It uses Unix standard streams as interface between Hadoop and your program.
 The number of reducer tasks is not governed by the size of the input, but instead is specified independently. When there are multiple reducers, the map tasks partition their output, each creating one partition for each reducer task.
+
+
+## The HDFS : the Hadoop Distributed Filesytem
+Distrubed filesystems: Filesystems that manage the storage across a network of machines
+HDFS is Hadoop's flagship filesysem, but Hadoop acutally has a general-purpose filesystem abstraction.
+* The design of HDFS *
+HDFS is a filesysem designed for storing very large files with streaming data access patterns, running on clusters of commodity hardware.
+Very large files: hundreds of megabytes, gigabytes, or terabytes in size.
+Streaming data access: HDFS is built around the idea that the most efficient data processing pattern is a write-once, read-many-times pattern. Each analyis will involve a large portion of the dataset, so the time to read the whole dataset is more important than the latency in reading the first record.
+Commodity hardware.
+HDFS is not a good fit for:
+Low-latency data access: HDFS is optimized for devlivering a high throughput of daa, and this may be at the expense of latency. HBase is a better choice?
+Lots of small files: because the namenode holds filesystem metadata in memory.
+Mulitple writers, arbitrary file modifications: NO support for such now. File in HDFS may be written to by a single writer. Writes are always made at the end of the file, in append-only fashion.
+
+* HDFS concept *
+As local filesystem, HDFS has the concept of a block, but it is a much large unit-128 MB by default. Like in a filesystem for a single disk, files in HDFS are broken into block-sized chunks. Unlike a filesystem for a single disk, a file in HDFS that is smaller than a HDFS block does not occupy a full block's worth of underlying storage(e.g., 1 MB occupies 1MB, not 128 MB).
+Block abstraction benefits:
+1. larger files
+2. simplicating the storage system. The storage subsystem dealw with blocks, and eliminate metadata concerns.
+3. Fit well with replications for providing tolerance and availability.
+
+* Namenodes(master) and datanodes(worker) *
+The namenode manage teh filesystem namespace and matains the filesystem tree and the meatadata for all the files and directories in the tree. The namenodes also knows the datanodes on which all the blocks for a given file are located; however, it does not store block locations persistently.
+Datanodes are the workhorses of the filesystem.
+Without the namenode, the filesystem cannot be used.
+namenode resilence: 1. backup metadata. 2. secondary namenode.
+Block caching to speed up frequently accessed files: cache pool.
+
+* HDFS fedration *
+multiple namenodes to scale out, and each manages a portion of the filesystem namespace.
+
+* HDFS HA *
+Active and standby
+failover and fencing
+
+* The command-line interface *
+It is the simplest interface to access hadoop filesytem.
+hadoop command: hadoop fs subcommand
+
+* Hadoop filesystem *
+Hadoop has an abstract notion of filesytems, of which HDFS is just one implementation. The Java abstract class `org.apache.hadoop.fs.FileSystem` represents the client interface to a filesytem.
+Hadoop filesystems: Local, HDFS, WebHDFS, Secure WebHDFS, HAR, View, FTP, S3, Azure, Swift
+
+* Interfaces *
+Hadoop is written in Java, so most Hadoop filesytem interactions are mediated through Java API. Even the filesystem shell, is a Java application that uses the Java FileSytem class to provide filesytem operations.
+1. HTTP
+HTTP REST API exposed by WebHDFS protocol for other languages to interact with HDFS. But it is slower than the native Java client, so should be avoided for very large data transfer. There are two ways of accessing HDFS over HTTP: Direct access(HDFS daemon serving HTTP requests) and a proxy. There are embedded web services in the namenodes and datanodes act as WebHDFS endpoints. NameNode manages metadata and send http redirect to the client indicating the datanode to stream file data from(or to). The proxy sits between clients and nodes to serve http request. This allows for stricter firewall and bandwidth-limiting policies to be put in place.
+
+2. C
+Hadoop provides a C library `libhdfs` to access any hadoop filesystem.
+
+3. NFS
+you can mount HDFS on a local client's filesystem using Hadoop's NFSv3 gateway.
+4. Fuse: Filesytem in Userspace.
+
+* The Java Inteface *
+Filesystem: the API for interacting with one of Hadoop's file system
+HDFS implementation: DistributedFileSystem
+- Reading data from a hadoop url
+- reading data from the filesystem api
+- FSDataInputStream: calling seek() is relatively expensive operation.
+- Writing Data: FSDataOutputStream does not permit seeking, as HDFS allow only sequential writes to an open file or apends to an already written file.
+- Directories
+- Querying the filesystem
+
+* Data Flow * for HDFS client, not HTTP client
+1. client calls open() on FileSystem, an instance of DistributedFileSystem
+2. DistributedFileSystem calles the namenode, using RPCs, to get blocks locations
+3. DistributedFileSystem returns an FSDataInputStream, which in trun wraps a DFSInputStream. Client calls read() on stream.
+Hadoop use `Lowest common ancestor` to determine the distance between nodes.
+
+* Data Flow for write *
+1. Client calls create() on DistributedFileSysem, making a RPC to thenamenode to create a new file in its namespace, with no block assocaited.
+2. client calls writes(). The DFSOutputStream splits in into packets, writing it to an internal queue called the data queue. The data queue is consumed by the DataStreamer, whichh is responsible for asking the namenode to allocated new blocks by picking datanodes. The list of datanodes forms a pipeline. The DataStreamer streams the packets to the first datanode in the pipeline, which stores it and forwards it to the second, and so does the second. The DFSOutputStream mains an ack queue. A packet is removed from teh ack queue only when it has been acked by all the datanodes in the pipeline. 
+3. clients calls close(). This flushes all the remaining packets and waits for acks before contacting the namenode to signal that the file is complete.
+
+* Coherency Model *
+HDFS trades off some POSIX requirements for performance.
+Only once more than a block's worthof data has been written, the first block will be visible to new readers. The current block being written is not visible to other readers.
+HDFS provides hflush() to flush all buffers to the datanodes, but it does not guarantee the datanodes have written the data to disk, as it may be in the memory.
+You can use hsync() to commit it to disk. close() will do an implicit hflush().
+
+
+## Chapter 4. YARN ##
+
