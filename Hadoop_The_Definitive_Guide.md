@@ -182,4 +182,10 @@ You can use hsync() to commit it to disk. close() will do an implicit hflush().
 
 
 ## Chapter 4. YARN ##
+Layered architecture:
+-- Application: MapReduce | Spark | Tez | ...
+-- Compute:            YARN
+-- Storage:        HDFS and HBase
+Users write to higher-level APIs provided by distributed computing frameworks, which themselves are built on YARN and hide the resource management details from users.
+There is also a layer of applications taht build on the frameworks:, like Pig, Hive and Crunch.
 
