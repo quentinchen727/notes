@@ -57,3 +57,16 @@ apt-get install net-tools // install ifconfi:w
 ## tcpdump
 tcpdump -i enp3s0f0 port 80 -nn -A -s 15000
 curl -v -X PUT -H "Authorization: Basic LnJpb3VzZXI6cm9vdHJvb3Q=" -H "X-Rio-CopyCount:1" -T tt1 http://20.0.52.47/rio/kyle/tt1
+
+## firewalld and ip(6)tables
+firewalld is a frontend of linux kenel ip table service.
+
+## name lookup
+dig(more information) > host > nslookup(expire)
+
+## Bash
+set -o vi // to turn on vi mode in bash, where readline will simulate some of the vi function
+bind -P //check binding mode
+fc // bring on your $EDITOR to fix your recent command
+ctrl-s // command history forward search
+ctrl-r // command history backward search

@@ -468,25 +468,22 @@
 
 
 
-## 13. Encapsulating code with moduels
-    A module is a javascript code that automatically runs in strict mode with no way to opt out. Var creatd in the top level of a module are not
-        automatically added to the shared global scope.
-    tow features: this in the top level of a module is undefined. Html-style comments are not allowed within code.
-    A module is different from a script.
-    export anything with name.
-    import {identfier1, identifier2 } from "foo.js"
-    you can't reassign value to imported names.
-    import * as example from "foo.js"; example.add  // namespace import
-    import and export can only be used at the top level of a module.
-    export {sum as add}; import {add as sum} from "foo.js"  // export and import rename
-    you can only set one default export per module.
-    export default function (a1, a2) {}; or export {sum as default};
-    import sum from "fo.js"  // import the default
-    export { sum as add } from "foo.js" // export an imported name
-    import "foo.js" // execute the module code without importing any bindings.
-    imports without bindings are most likely to be used to create polyfills and shims.
-    <script type="module" src="module.js"></script>
-    <script type="module">code</script>
+## 13. Encapsulating code with modules
+    A module is a javascript code that automatically runs in strict mode with
+    no way to opt out. Var creatd in the top level of a module are not
+    automatically added to the shared global scope.  tow features: this in the top
+    level of a module is undefined. Html-style comments are not allowed within
+    code.  A module is different from a script.  export anything with name.  import
+    {identfier1, identifier2 } from "foo.js" you can't reassign value to imported
+    names.  import * as example from "foo.js"; example.add  // namespace import
+    import and export can only be used at the top level of a module.  export {sum
+    as add}; import {add as sum} from "foo.js"  // export and import rename you can
+    only set one default export per module.  export default function (a1, a2) {};
+    or export {sum as default}; import sum from "fo.js"  // import the default
+    export { sum as add } from "foo.js" // export an imported name import "foo.js"
+    // execute the module code without importing any bindings.  imports without
+    bindings are most likely to be used to create polyfills and shims.  <script
+    type="module" src="module.js"></script> <script type="module">code</script>
     when async used with scripts. it causes the script file to be executed ASAP the file is completely downloaded and parse. However, the order of async
         scripts in the document doesn't affect the order in which the scripts are executed.
     <script type="module" async src="module1.js"></script> same rule as async script.
