@@ -70,3 +70,26 @@ bind -P //check binding mode
 fc // bring on your $EDITOR to fix your recent command
 ctrl-s // command history forward search
 ctrl-r // command history backward search
+
+## mmap
+mmap is a POSIX-compliant unix system call that maps files or devices into
+memory, a method of memory-mapped file I/O. It naturally implements demand
+paging. It can be used as IPC, as opposed to System V IPC "shared memory
+facility".
+
+## cscope
+cscope -d ## open command line interface
+
+## Gflags
+The flag definitions can be scattered around the source code, not just listed
+in one place such as main().
+1. dEclare dependency on gflags with CMake/Bazel.
+2. DEFINE: defining flags in program:
+    #include <gflags/gflags.h>
+    DEFINE_bool // defining a boolean flag
+    and other types: int32, int64, uint64, double, string.
+    DEFINE_bool(name, default_value, help_string) // --help flag
+You can define a flag anywhere in your source code. If u want to use it across
+files, define it in .cc, and declare it in .h.
+3. Accessing the Flag: FLAGS_foo
+4. accessing the flag in a different file: DECLARE_bool(foo);

@@ -310,3 +310,11 @@ The correct way to work with elements in React: user input -> events -> state
 -> view. one-way binding.
 
 Defing a form and its events in React
+
+
+# React Architecture
+## Chapter 12. The webpack build tool
+A build tool or a bundler.
+Code generators: create-react-app
+Webpack knows how to deal with all three types o Javascript module-CommonJS,
+AMD and ES6.

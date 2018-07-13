@@ -12,8 +12,8 @@ Markdown translate < or & for you into &lt or &amp automatically if need.
    When you do want to insert <br /> break tag using Mardkown, you end a line with two or more spaces, then type return.
 
 ## Headers
-1. underlined: ====== or------; any number will work
-2. Atx-style use 1-6 hash characters ath the start of the lin.
+1. underlined: ====== or_____; any number will work
+2. Atx-style use 1-6 hash chaacters ath the start of the line.
 
 ## Blockquotes
 Markdown uses email-style > characters for blockquoting.

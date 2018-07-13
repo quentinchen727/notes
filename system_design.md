@@ -392,3 +392,16 @@ Disadvantage:
 - relies on a few verbs which sometimes doesn't fit your use case.
 - Fetching complicated resources with nested hierarchies requires multiple round trips between client and server to render single views.
 - Over time, more fields might be added to an API repsonse and old clients receive all new data fields, even those that they do not need.s a result, it blats the payload size and leads to large latencies.
+
+### Bloom Filters vs Hash map or other dats structures for represeting sets
+Bloom filters have a strong space advantge over other data structure for
+represeting sets. A bloom filter doesn't store the elements themselves. You
+don't use the bloom filter to test if an element is present, you use it to test
+whehter it's surely not present, since it guarantees no false negatives.
+Have the filter in the RAM, and use it along with hashmap to check whether an
+element exisits.
+
+## Notes:
+Memcache is a look-aside cache, which means in case of a cache miss, you hav
+e to populate the entry by yourself, different from look-through/cache-through
+cache.

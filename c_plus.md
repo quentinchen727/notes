@@ -1252,7 +1252,8 @@ Like vectors, smart pointers are templates.
 shared_ptr<string> p1;
 A default smart pointer holds a null pointers.
 shared_ptr<T> sp; // Null smart pointer that can point to objects of type T.
- unique_ptr<T>; p.get() // return the pointer in p.
+unique_ptr<T>; 
+p.get() // return the pointer in p.
 operations common to shared_ptr and unique_ptr;
 shared_ptr<T>, unique_ptr<T>, p, *p, p->mem, p.get(), swap(p,q), p.swap(q);
 
@@ -1298,3 +1299,1649 @@ For the same reason as we usually initialize variables, it is also a good idea
 to initialize dynamically allocated objects.
 
 auto p1 = new auto(obj);
+
+*7.6 static class members*
+A static member is associated with the class. it can be public or private, and
+can be const, reference, array, class type and so forth. static member
+functions may not be declared as const, and we my not refer to `this` in the
+body of a static member, or implicit use `this` by calling a nonstatic member.
+
+We can *define* a static member function inside or outside of the class body.
+When we define a static member outside the class, we do not repeat the static
+keyword. The `static` keyword is used only inside the class body.
+
+In general, we may not initialize a static member inside the class. Instead, we
+must define and initialize each static data member outside the class body.
+
+Tips: the best way to ensure the object is defined exactly once is to put the
+definition of static data members in the same file that contains the
+definitions of the class noninline member functions.
+
+In-class initialization of static data members
+Ordinarily, static members may not be initialized in the class body. We can
+provide in-class initializer for static members that have const integral type
+and must do so for static members that are constexpr of literal types.
+
+Best practice: Even if a const static data member is initialized in the class
+body, that member ordinarily should be defined outside the class definition. If
+an initializer is provided inside the class, the member's definition must not
+speficy an initial value.
+static members can have imcomplete types.
+
+class Screen; //declaration of the Screen class: an incomplete type
+We can use an incomplete type in only limited ways:
+- define pointers or references to such types
+- declare(but not define) functions that use an incomplete type as a parameter
+  or return type.
+A data member of a class can be of its own class, as a class is not defined
+until its class body is complete, hence it cannot know the needed storage for
+that data member.
+
+*12.1.2 Managing memory directly*
+Classes that do manage their own memory cannot rely on the default definitions
+for the members that copy, assign, and destroy class objects.
+int *pi = new int; //pi points to a dynamically allocated, unnmaed,
+uninitialized int.
+By default, for dynamically allocated objects, built-int or compund type have
+unfined value; objects of class type are initialized by their default
+constructor.
+String *ps = new string; // empty string;
+int *pi = new int; // uninitialized int.
+string s; // empty string
+string s2(s1) equal to s2 = s1;
+int *pi = new int();; // initialized to 0.
+We can also use list initialization:
+vector<int> *pv = new vector<int>{0,1,2,3,4}
+For built-ins, value initialization () and default initialization is different,
+while it is the same for objects of class type.
+
+auto p1 = new auto(obj); // use obj to deduce the type
+
+const int *pi = new const int(1024); // must be initialized.
+A const dynamic object of a class type that defines a default constructor may
+be initialized implicitly, but other types must be explicitly initialized.
+
+If there is memory exhaustion, a `bad_alloc` will be thrown.
+But: int *p2 = new (nothrow) int; // if allocation fails, new return a null
+pointer. This kind of new is called replacement new. Both bad_alloc and nothrow
+are defined in the new header.
+
+Free dynamic memory:
+deleting a pointer to memory that was not allocated by new, or deleting the
+same pointer more than once, is undefined.
+int *pi2 = nullptr;
+delete pi2; // ok to delete a null pointer.
+Compilers cannot tell whether a pointer points to a statically or dynamically
+allocated object, or whehter memory addressed by a pointer has already been
+freed.
+
+Foo& get_copy_reference() { return *this; } // used for chaining.
+
+Dynamic memory managed through built-in pointers exists until it is explicitly
+freed.
+
+Caution: managing dynamic memory is error-prone:
+1. forgetting to delete memory, resulting in memory leak. Testing for memory
+   leak is difficult because they usually cannot be detected until the
+application is run for a long enough time to actually exhaust memory.
+2. using a deleted pointer. This error can sometimes be detected by making the
+   pionter null after the delete.
+3. deleting the same memory twice, and then the free store may be corrupted.
+
+No dangling pointer.
+
+* Smart shared_ptr *
+shared_ptr<double> p1;
+shared_ptr<int> p2(new int(42)); // no implicit converting built-in pointers
+cuz its constructor takes explicit pointer.
+sharea_ptr<int> p2 = new int(11); // **WRONG*****
+shared_ptr<T> p(q); // p manages the object to which the built-in pointer
+points;
+shared_ptr<T> p(u); p assumes ownership from the unique_ptr u; make u null;
+shared_ptr<T> p(u);
+shared_ptr<T> p(q,d); // use the callable object d in place of delete.
+p.reset(); // if p is the only shared_ptr, reset frees p's existing object.
+p.reset(n_ptr); // use reset to assign a new pointer to p. We cannot use '='
+shared_ptr<int> clone (int p) {
+    return shared_ptr<int>(new int(p));
+}
+
+When we bind a shared_ptr to a plain pointer, we give responsibility for that
+memeory to that shared_ptr. And we should not no longer use a built-int pointer
+to access the memory to which the shared_ptr now points.
+
+Don't use `get` to initialize or assign another smart pointer. get() is
+intended for cases when we need to pass a built-int pionter to code that can't
+use a smart pointer. The code using the pointer returned from get must not
+delete that pointer.
+
+if (!p.unique()) {
+    p.reset(new string(*p)); // allocate a new copy
+}
+
+*Smart pointers and exceptions*
+
+C++ exception will propragate along the function chain, like in python. If no
+one is caught, execution is transferred to a library function named
+`terminate`.
+
+C++: Writing exception safe code is Hard.  `exception` header: the most general
+kind `stdexcept`: several general-purpose exception classes `new`: the
+bad_alloc exception type `type_info`: bad_case type Provide initializer to
+provide additional information about the error that occurred.
+
+When a function is terminated, whether through normal processing or due to an
+exception, all the local objects are destroyed. So if we use a shared_ptr to
+manage memory, that will be freed automatically, while not if using raw memory.
+
+By default, when a shared_ptr is destroyed, it execute delete on the pointer it
+holds. We can define a function to use in place of delete.
+void end_connection(*p){ disconnect(*p);}
+shared_ptr<connection> p (&c, end_connection);
+
+Caution: smart pointers pitfalls
+1. Don't use the same built-int pointer value to initialize(or reset) more than
+   one smart pointer.
+2. Don't delete the pointer returned from get().
+3. Don't use get() to initialize or reset another smart pointer.
+4. If you use a pointer returned by get(), that pointer will become invalid
+   when the last responding smart pointer goes away.
+5. If you use a smart pointer to manager a resource other than memory allocated
+   by new, remember to passer a deleter function.
+
+** unique_ptr **
+unique_ptr<T> u1; // null unique_ptrs that can point to objects of type T.
+unique_ptr<T, D> u2; // use a callable object of type D to free its pointer.
+unique_ptr<T, D> u(d); // d is a object of type D.
+u = nullptr; // deletes the object; makes u null
+u.release(); // relinquish control of the pointer u had held; returns the
+pointer u had held and makes u null;
+u.reset(); // delete
+u.reset(q); // point to a built-in pionter q.
+u.reset(nullptr); // makes u null;
+Because unique_ptr owns the object, it does not support ordinary coy or
+assignment.
+unique_ptr<string> p2(p1.release());
+p2.reset(p3.release()); // transfer ownership from p3 to p2; delete the memory
+to which p2 had pointed.
+
+Calling release() just breaks the connection between a unique_ptr and the
+object it is managing.
+p2.release(); // p2 won't free the memory.
+auto p = p2.release(); // we need to delete(p).
+
+Exception: we can copy or assign a unique_ptr that is about to be destroyed.
+unique_ptr<int> clone(int p) {
+    return unique_ptr<int>(new int(p));
+} // the compiler does a special copy
+or
+unique_ptr<int> clone(int p) {
+    unique_ptr<int> ret(new int(p));
+    return ret;
+} // the compiler does a special copy
+
+* Passing a Deleter to unique_ptr *
+Similar to overriding the comparison operation of an associative container, we
+must supply the deleter type inside the angle brackets along with the type to
+which the unique_ptr can point, which affect the unique_ptr type.
+Different from shared_ptr, we must
+unique_ptr<connection, decltype(end_connection) *> p(&c, end_connection); // *
+indicates we're using a pointer to that type.
+
+** 12.1.6 weak_ptr **
+A weak_ptr does not control the lifetime of the object.
+weak_ptr<T> w; // null weak_ptr
+weak_ptr<T> w(sp); // points to the same object as the shared_ptr sp;
+w = p; // p can be a shared_ptr or weak_ptr;
+w.reset(); // makes w null;
+w.use_count(); // the number of shared_ptrs that share ownership with w.
+w.expired(); // if w.use_count() == 0;
+w.lock(); // If expired() returns true, returns a null shared_ptr; otherwise
+returns a shared_ptr to the object to which w points.
+auto p = make_shared<int>(42);
+weak_ptr<int> wp(p);
+Because the object might no longer exist, we cannnot use a weak_ptr to access
+its object directly. We must call lock.
+if (shared_ptr<int> np = wp.lock()) {} // access the object only if np is not
+null.
+By using a weak_ptr, we don't affect the lifetime of object. However, we can
+prevent the user from attempting to access a object that no longer exists.
+
+### 12.2 Dynamic Array ###
+Most applications should use a library container rather than dynamically
+allocated arrays. Using a container is easier, less likely to contain
+memory-management bugs, and is likely to give better performance.
+
+typedef int arrT[42]; // names the type array of 42 ints.
+int *p = new arrT; // the compiler will tranform it to new int[42];
+
+Essentially, allocating an array yields a pointer to the element type.
+int ia[] = {1,2,3]}; int *beg = begin(ia); // dimension is part of the array
+type.
+But dynamically allocated array is not an array type, so we cann't call begin
+or end on it. For the same reason, we also cannot use a range for to process
+the elements in a (so-called) dynamic array.
+
+int *p = new int[10]; // uninitialized int;
+int *p2 = new int[10](); // initialized to 0
+int *p3 = new int[10](1,2,3,4); //error
+int *p4 = new int[10]{1,2,3,4,5}; // we cannot use 'auto' to allocate an array.
+
+It is legal to dynamically allocate an empty array, while not to statically do
+it.
+
+delete [] pa; // destroyed in reverse order.
+delete pa; // undefined behavior
+
+unique_ptr<int[]> up(new int[10)]); //
+up.release(); // calls delete [];
+up[0] = 3; // we cannot use . or arrow accessor, but we can use subscript.
+
+shared_ptr<int> sp(new int[10], [](int *p) {delete[] p; }) // no directly
+support for dynamical arrays in shared_ptr.
+
+There is no subscript operator for shared_ptrs, and smart pointer types do not
+support pointer arithmetic.
+
+### 12.2.2 The allocator class ###
+To decouple initialization and allocation, `allocator` provides raw,
+unconstructed memory.
+allocator<T> a;
+a.allocate(n);
+a.deallocate(p, n); // must destroy any object before calling deallocate.
+a.construct(p, args);
+a.destroy(p);
+Once the elements have been destroyed, we can either reuse the memory to hold
+ohter strings or return the memory to the system.
+
+algorithms to copy and fill uninitialized memory:
+uninitialized_copy(be, e, b2);
+uninitialized_copy_n
+uninitialized_fill/_n
+
+#Part III Tools for Class authors#
+Classes also control what happens when objects are copied, assigned, moved, and
+destroyed. In this respect, C++ differs from other languages.
+
+Sales_data obj; // declare an object initialized with the default constructor
+Sales_data obj(); // oops! declare a function.
+
+When a constructor is declared explicit, it can be used only with the direct
+form of initialization. Moreover, there is no automatic conversion.
+Sale_data obj(args);
+Sale_data obj = obj2; // wrong, cannot use the copy form of initialization.
+And the explicit keyword is meaningful only on constructors that can be called
+with a single argument.
+explicit constructors are only declared in class body.
+
+## Copy Control ##
+A class controls what happens when objects of that class type are copied,
+moved, assigned, and destroyed, by defining: copy constructor, copy-assignment
+operator, move constructor, move-assignment operator, and destructor. We call
+them copy-control.
+If a class does not define all of the copy-control members, the compiler
+automatically defines the missing operations.
+
+* The copy constructor *
+A constructor is the copy constructor if its first parameter is a reference to
+the class type and any additional parameters have default values;
+class Foo {
+    public:
+        Foo(const Foo&);
+} // as it is used implicitly in several circumstances, the copy constructors
+usually should not be explicit.
+
+* The Synthesized copy constructor *
+
+We cannot copy or assign an arry to another.
+
+A copy constructor is synthesized even if we define other constructors.
+Mostly, the compiler copies each nonstatic member in turn from the given object
+into the one being created. Member of class type are copied by the copy
+constructor for that class; members of built-in type are copied directly. Array
+type is copied by coping each element.
+
+string dots(10, '.'); //direct initialization
+string s(dots); // direct; copy constructor
+string s2 = dots; // copy initialization
+string lines = string(100, '9'); //copy
+
+If a class have a move constructor, the copy initialization sometimes uses
+themove constructor instead of the copy constructor.
+
+Copy initialization happens when:
+1. using a = to initialize
+2. pass an object as an argument to a parameter of nonreference type
+3. return an object from a function that has a nonreference return type
+4. brace initialize the elements in an array or the members of an aggregate
+   class.
+
+The library containers copy initialize their elements when we initialize the
+container, or we call insert or push member. By contrast, elements created by
+an emplace member are direct initialized.
+
+Tha fact that the copy constructor is used to initialize nonreference
+parameters of class type explains whey the copy constructor's own parameter
+must be a reference.
+
+vector constructor that takes a single size is explicit.
+So vector<int> v(10); //ok
+vector<int> v2 = 10; // error
+During copy initialization, the compiler is permitted to skip the copy/move
+constructor and create the object directly.
+
+* The copy-assignment operator *
+The compiler will synthesizes a copy-assignment operator if the class does not
+define its own.
+Sale_data trans, accum;
+trans = accum; // use copy-assignment operator.
+
+Overloaded operators are functions that have the name operator followed by
+symbol for the operator being defined, e.g., the assignment operator is
+operator=.
+Foo & operator=(const Foo&); // assignment operator
+It usually return a reference to its left operand.
+It assign each nonstatic member of the right-hand object to the corresponding
+member fo the left-hand object using the copy-assignment operator for the type
+of that member.
+
+* The destructor *
+~Foo(); // has no return value and taks no parameters.
+There is always only one destructor for a given class.
+In constructor, members are initialized first before the function body is
+executed, and members are initialized in the same order as appear in the class.
+In a destructor, the function body is executed first and then the members are
+destroyed.
+TThere is nothing to control how members are destroyed. Members of class type
+are destroyed by running the member's own destructor.
+Note: the implicit destruction of a member of built-in pointer type does not
+delete the object to which that pointer points.
+The built-in type does not have destructor.
+
+When a destructor is called:
+1. variable goes out of scope.
+2. member of an object when the object is destroyed.
+3. elements in a container when a container or an array are destroyed.
+4. delete a dynamically allocated object.
+5. temporary objects are destroyed at the end of full expression in which the
+   temporary was created.
+The destructor is not run when a reference or a pointer to an object goes out
+of scope.
+By default, the synthesized destructor has an empty function body. members are
+destroyed as part of implicit destruction phase that follows the destructor
+body.
+
+* The rule of three/five *
+There is no requirement that we define all of these operations. However,
+ordinarily these operations should be thought of as a unit.
+Classes that need destructors need copy and assignment.
+Classes that need copy need assignment, and vice versa. But needing either the
+copy constructor or the copy-assignment operator does not indicate the need for
+a destructor.
+
+* Using = default *
+We can explicitly ask the compiler to generate the synthesized version of
+copy-control members by defining them as =default;
+1. in class body: (become an inline function)
+    Sale (const Sale &) = default;
+    Sale () = default;
+    ~Sale() = default;
+
+2. or outside of class body:
+    Sale& Sale:operator=(const Sale&) = default;
+
+* Preventing copies *
+ A deleted function is one that is declared but may not be used in any other
+way.
+NoCopy(const NoCopy&) = delete; // no copy
+NoCopy &operator=(const NoCopy&) = delete; // no assignment
+~NoCopy() = default; // use the synthesized destructor
+The = delete signals to the compiler that we are intentionally not defining
+these members.
+Unlike = default, = delete must appear on the first declarationof a deleted
+function. A default member affects only what code the compiler generates. On
+the other hand, the compiler needs to know that a function is deleted in order
+to prohibit operations that attempt to use it.
+We can only use = default on default constructor, or a copy-control member. But
+we can use = delete on any function.
+
+The Destructor should not be a deleted member, otherwise it cannot be destroyed.
+
+* The copy-control member may be synthesized as deleted. *
+    If a class has a data member that cannot be default constructed, copied,
+    assigned, or destroyed, then the corresponding member will be a deleted
+    function.
+    If a member has a deleted or inaccessible destructor, it will cause the
+synthesized default and copy constructors to be defined as deleted.
+    The compiler will not synthesize a default constructor for a class with a
+reference member or a const member that cannot be default constructed.
+    A class with a const member cannot use the synthesized copy-assignment
+operator. It is impossible to assign a new value to a const object.
+
+Private copy control:
+prior to new stand, we declare private but not define copy-control functions.
+Best practices: Classes that want to prevent copying should define their copy
+constructor and copy-assignment operators using = delete rather than making
+those members private.
+
+* Copy Control and Resource Management *
+We first have to decide what copying an object of an type will mean: valuelike
+or pointlike.
+Classes that behave like values have their own state. Classes that behave like
+pointers share state.
+valuelike: library containers, string
+pointerlike: shared_ptr
+None of the above: IO types and unique_ptr.
+
+Valuelike classes:
+Key concept in assignment operators:
+1. Assignment operators must work correctly if an object is assigned to itself.
+2. Most assignment operators share work with the destructor and copy
+   constructor.
+A good pattern is to first copy the right-hand operand into a local temporary.
+After the copy is done, it is safe to destroy the existing member of the
+left-hand operand. Once it is destroyed, copy the data from the temporary into
+the memebers of the left-hand operand.
+It is important to guard against self-assignment.
+
+Pointerlike classes:
+Usually, we can take use of shared_ptr;
+But we can also use a reference count.
+Also, the copy-assignment operator must handle self-assignment.
+
+* 13.3. Swap *
+Algorithm that reorder elements use the class-specific version ot exchange two
+elements if a class defines its own, otherwise it uses the swap function
+defined by the library.
+class HasPtr {
+    friend void swap(HasPtr&, HasPtr&);
+}
+inline void swap(HasPtr &lhs, HasPtr &rhs) {
+    using std::swap;
+    swap(lhs.ps, rhs.ps);
+    swap(lhs.i, rhs.i);
+}
+Unlike the copy-control members, swap is never necessary. However, defing swap
+can be an important optimization for classes that allocate resources.
+
+
+swap should call swap, not std::swap.
+Write type-specific swap version.
+
+Assignment operations that use copy and swap are automatically exception safe
+and correctly handle self-assignment.
+HasPtr HasPtr::operator=(HasPtr rhs) { // copy by value, not by reference.
+    swap(*this, rhs);
+    return *this;
+}
+
+* A copy-control example *
+The library defines versions of swap for both string and set.
+swap(set&, set&); swap(string&, string&)
+
+* Classes that manage dynamic memory *
+Default-initialization: if T is a class, the default constructor is called; if
+it's an array, each element is default-initialized; otherwise, no
+initialization is done, resulting in indeterminstic values.
+vector has value like behavior.
+
+** Move constructors and std::move **
+1. Several of the library classes, including string, define so-called "move
+constructors".
+2. a library function named `move`, which is defined in the `utility` header.
+we call std::move.
+
+The reallocate member
+alloc.construct(dest++, std::move(elem++)); // calling move returns a result
+that causes construct to use the string move constructor. Each string we
+construct will take over ownership of the memory from the string which elem
+points. The old strings will no longer manage the memory to which they had
+pointed to. We don't know what value the strings in the old ones have, but we
+are guaranteed it is safe to run the string destructor on these objects.
+
+### 13.6. Moving objects ###
+reasons to move object instead of copying:
+1. if an object is immediately destroyed after it is copied. Moving can give it
+   a performance boost.
+2. IO or unique_ptr can't be coped but can be moved. They can't be shared.
+
+Under the new standard, we can use containers on types that cannot be copied so
+long as they can be moved. In previously versions of the library, making a
+needless copy can be expensive and classes stored in a container had to be
+copyable.
+
+Note:
+    The library containers, string, and shared_ptr classes support move as well
+    as copy. The IO and unique_ptr classes can be moved but no copied.
+
+* Rvalue references *
+To support move operations, the new standard introduced an `rvalue reference`.
+rvalue reference may be bound only to an object that is about to be destroyed.
+A rvalue reference is a reference that must be bound to an rvalue. &&rvalue
+
+Like any reference, an rvalue reference is just another name for an object.
+regular reference is lvalue reference.
+We cannot bind a lvalue reference to expressions that requires a conversion, to
+literals, or to expressions that return a rvalues.
+rvalue reference does the opposite.
+int &&rr = i; // error
+int $r2 = i * 42; // error: i * 42 is an rvalue.
+const int &r3 = i * 42; // ok: we can bind a reference to const to an rvalue.
+int &&rr2 = i * 42; // ok.
+
+Functions that return lvalue references, along with the assignment, subscript,
+dereference, and prefix increment/decrement operators, are expressions that
+return lvalues.
+Functions taht returns a nonreference type, along with the arithmetic,
+relational, bitwise, and prostfix increment/decrement operators, all yeild
+rvalue. We can not bind an lvalue reference to these expressions, but we can
+bind either an lvalue reference to const or an rvalue reference to such
+expressions.
+
+Lvalue persists; Rvalues are ephemeral.
+Lvalue have persistent state, whereas rvalues are either literals or temporary
+objects created in the course of evaluating expression.
+
+Variables are Lvaues. we cannot directly bind an rvalue reference to a variable
+even if that variable was defined as an rvalue reference type.
+int &&rr1 = 42; // literal are rvalue;
+int &&rr2 = rr1; // error; rr1 is a lvalue;
+
+int &&rr3 = std::move(rr1); //ok
+Calling move tells the compiler that we have an lvalue that we want to treat as
+if it were an rvalue. We can destroy a moved-from object and can assign a new
+value to it, but we cannot use the value of a moved-from object.
+We call std::move not move.
+
+* Move constructor and move assignment *
+Differently from the copy constructor, the reference parameter in the move
+constructor is an rvalue reference. Any additional parameters must all have
+default arguments.
+Foo::Foo(Foo &&s) noexcept : // no exception
+    el(s.el), first(s.first), cap(s.cap) { // member initializers take over the
+resource in s.
+    s.el = s.first = s.cap = nullptr; // leave s in a state in which it is safe
+to run the destructor. Otherwise, destroying the moved-from object would delete
+the memory we just moved.
+}
+
+use noexcept to inform the library that the function does not throw any
+exception.
+Move constructors and move assignment operators that cannot throw exceptions
+should be marked as noexcept.
+
+The library container, such as vector, guarantees that if an exception happens
+when we call push_back, the vector itself will be left unchanged.
+
+* Move-assignment operator *
+Like a copy-assignment operator, a move-assignment operator must guard against
+self-assignment.
+Foo &Foo::operator=(Str &&rhs) noexcetp{ ...; return *this; }
+
+A moved-from object must be destructible
+The moved-from object is safe to destroy, and it is also valid to give a new
+value. On the otherhand, there is no requirements as to the remaining value.
+e.g., if we move from a string or a container, the moved-from object is still a
+valid object, with all the attributes, but we don't know the remaining value.
+
+After a move operation, the "moved-from" object must remain a valid,
+destructible object but users may make no assumption about its value.
+
+* The synthesized move operations *
+Conditions:
+1. the compiler will synthesized a move constructor or a move-assignment operator
+only if the class doesn't define any of its own copy-control member and if
+every every non-static data membe of the class can be moved.
+2.  The compiler can move members of built-in type. It can also move members of
+    a class type if the member's class has the corresponding move operation.
+
+A move operation is never implicitly defined as a delted function.
+The rulef for when a synthesized move operation is defined as deleted:
+1. if the class has a member that defines its own copy constructor but does not
+   also define a move constructor, or if the class has a member that doesn't
+define its own copy operations, but for which the complier is unable to
+synthesize a move constructor.
+
+A move operation is never implicitly defined as a delted function.
+The rulef for when a synthesized move operation is defined as deleted:
+1. if the class has a member that defines its own copy constructor but does not
+   also define a move constructor, or if the class has a member that doesn't
+define its own copy operations, but for which the complier is unable to
+synthesize a move constructor.
+
+A move operation is never implicitly defined as a delted function.
+The rulef for when a synthesized move operation is defined as deleted:
+1. if the class has a member that defines its own copy constructor but does not
+   also define a move constructor, or if the class has a member that doesn't
+define its own copy operations, but for which the complier is unable to
+synthesize a move constructor.
+2. the class has a member whose own move constructor or move-assignment
+   operator is deleted or inaccessible.
+3. the move constructor is defined as deleted if the destructor is deleted or
+   inaccessible.
+4. the move-assignment operator is defined as deleted if the class has a const
+   or reference member.
+
+Classes that define a move constructor or move-assignment operator must also
+define their own copy operator. Otherwise, those synthesized membes are deleted by default.
+
+* Rvalues are moved, Lvalues are copied..*
+StrVec v1, v2;
+v1 = v2; // v2 is an lvaue; copy assignment;
+StrVect getVect(istream &);
+v2 = getVect(cin); // move assignment; both matches. But calling the
+copy-assignment operator requires a conversion to const, where StrVect&& is an
+exact match.
+
+* But Rvalues are copied if there is no move constructor *
+Foo z(std::move(x)); // copy constructor will be calld, because there is no
+move constructor. the copy constructor for Foo is viable becaue we can convert
+a Foo&& to a const Foo&.
+Using the copy constructor in place of a move constructor is almost surely safe.
+
+*Copy-n-swap assignment operators and move *
+HasPtr& operator=(HasPtr rhs){}; //the paremeter is copy initialized; depending
+on the type of the argugment, copy initialization uses either the copy
+consructor or the move constructor.
+
+All five copy-control members should be thought of as a unit: Ordinarily,if a
+class defines any of these, it usually should define them all.
+
+foldes = std::move(m->folders); // use set move assignment.
+
+* move iterator *
+unitialized_copy(make_move_iterator(begin()), make_move_iterator(end), first);
+
+Advice: Don't be too quick to move
+Because a moved-from object has indeterminate state, calling std::move on an
+object is a dangerous operation. When we call move, we must be absolutely
+Judiciously used inside class code, move can offer significant performance
+benefits.
+Outside of class implementation code such as move constructors or
+move-assignment operators, use std::move only when you are certain that you
+need to do a move and that the move is guaranteed to be safe.
+
+* Rvalue references and member functions *
+Member functions other than constructor and assignment can benefits from
+providing both copy and move version.
+void push_back(const X&); // copy: binds to any kind of X. Free to copy from
+its parameter.
+
+Note: overloaded functions that distinguish between moving and copying a
+parameter typically have one version that takes a const T& and one that takes a
+T&&.
+void push_back(X&&); //move: binds only to modifiable rvalues of type X. Free
+
+void StrVec::push_back(string &&s) {
+    chk_n_alloc();
+    alloc.construct(first_free++, std::move(s)); // construct takes a rvalue
+refrence as the second parmameter in order to use the move constuctor, but the
+s is assigned to the second parameter of constructor and s becomes a lvalue in
+the right side of assignment, so we must call std::move(s) to get a rvalue
+reference.
+}
+to steal source from its parameter.
+certain that there can be no other users of the moved-from object.
+
+* Rvalue and Lvalue reference member function *
+We indicate the lvalue/rvalue property of this in the same way that we define
+const member functions:
+Foo &operator=(const foo&) &; // may assign only to modifiable lvalue;
+& or && indicates this may point to an rvlaue or lvalue.
+Like the const qualifer, a reference qualifer may appear only on a (nonstatic)
+member function and must appear in both the declaratin and definition of the
+function.
+Foo another() const &; // const before &
+
+* Overloading and reference functions *
+If a member function has a reference qualifier, all the versions of that member
+with the same parameter list must have reference qualifier.
+
+Warning:
+Foo A(); // oops! declare a function, not an object
+Foo A; // A is an initialized object. No trailing parenthese.
+
+
+## 14. Overloaded operations and conversions
+Except for the overloaded function-call operator, operator(), an overloaded
+operator may not have default arguments.
+When an overloaded operator is a member function, this is bound to the
+left-hand operand, hence one parameter less.
+A overloaded operator has the same precedence and associativity.
+
+data1 + data2;
+operator+(data1, data2); //equivalent
+data1.operator+=(data2); // member function
+
+Ordinarily, the comma, address-of, logical AND, and logical OR operators should
+not be overloaded.
+
+Use definitions that are consistent with the built-int meaning.
+
+Caution: use operator overloading judiciously:
+e.g., string uses + to represent concatenation.
+
+Choosing member or Nonmember implementation
+1. The=, [], () and -> operator must be defined as members;
+2. the compound-assignment operators normally ought to be members, but not
+   required.
+3. Operators taht change the state of their object or that are closely tied to
+   their given type-such as increment, decrement, and dereference, usually
+   should be members.
+4. Symmetric operators-those that might convert either operand, such as the
+   arithmetic, equality, ralational, and bitwise operators- usually should be
+   defined as nonmember functions.
+
+"hi" is a const char \*, which is a builtint type.
+
+* overloading the output operator <<
+ostream &opeator<<(ostream &os, const Sales_data &item) { return os;}
+
+IO operators are non-member functions, and they must be declared as friends.
+
+Input operators should decide what, if anything, to do error recovery.
+
+Arithmetic and relational operators
+
+* Equality operators *
+bool operator==(const Sale_data &lhs, const Sale_data &rhs){};
+Classes for which there is a logical meaning for equality normally should
+define operator==. Classes that define == make it easier for users to use the
+class with the library algorithms.
+
+Relational operators:
+If a single logical definition for < exists, classes ususally should define the
+< operator. However, if the class also has ==, define < only if the definition
+of < and == yield consist results.
+
+* Assignment operators *
+In addition to the copy- and move-assignment operators that assign one object
+of the class type to another of the same type, a class can define additional
+assignment operators that allow types as the right-hand operand.
+e.g. vector<string> v;
+v = { "a", "b", "c"};
+StrVec &operator=(std::initializer_list<std::string>);
+
+Assignment operators must, and ordinarily compound-assignment operators should,
+be defined as memembers. These operators should return a reference to the
+left-hand operand.
+
+* Subscript Operator *
+If a class has a subscript operator, it usually should define two versions: one
+that return a plain reference and the other that is a const member and return a
+reference to const.
+
+Non const object can invoke const or non const member function, while const
+object can only invoke cont member function.
+
+* Increment and Decrement Operators *
+Classes that define increment or decrement operators should define both. And
+they are defined as members.
+StrBlobPtr operator++(int); //postfix; the int parameter is not used, so we do
+not give it a name.
+StrBlobPtr operator++(); //prefix
+
+Operator arrow must be a member. The dereference operator is not required to be
+a member but usually should be a member as well.
+
+The overloaded arrow operator must return either a pointer to a class type or
+an object of a class type that defines its own operator arrow.
+
+* Function-call Operator *
+int operator()(int val) const{};
+The function-call operator must be a member function. A class may define
+multiple versions of the call operator, each of which must differ as to the
+number or types of their parameters.
+
+Objects of class taht defines the call operator are referred to as "function
+objects".
+for_each(vs.begin(), vs.end(), PrintString(ceer, '\n'));
+Function objects are most often used as arguments to the generic algorithms.
+
+* Lambdas are function objects *
+When we write a lambda, the compiler translate that epression into an unnamed
+object of an unmaed class.
+
+Classes representing lambdas with captures:
+If captured by value, those arguments will be saved to data memembers of the
+generated lambda class.
+
+* Library-defined function objects *
+A set of class in the stdlib that represent the arithmetic, relational, and
+logical operators defines a call operator that applies the named operation.
+e.g., "plus" applies to "+".
+And those are templates.
+Plus<int>   or Plus<string>
+modules: %
+equal_to: ==
+
+Using a library function object with the algorithms
+sort(svec.begin(), svec.end(), greater<string>()); // by default using
+operator<(), which gives an ascending order. Now it gives a descending order.
+
+One important aspect of these library function objects is that the library
+guarantees that they will work for pointer, while comparison on two unrelated
+pointers is undefined.
+
+The associative containers use less<key_type> to order their elements.
+
+* Callable Objects and function *
+Several kinds of callable objects:
+1. function 
+2. function pointers.
+3. lambdas
+4. objects created by bind
+5. class that overloads function-call operator.
+Different types can have the same call signature, but they are essentially
+different types.
+Using function in functional header to solve the problem:
+function<int(int,int)> f1 = add;
+map<string, function<int (int, int)>> binops;
+int (*fp) (int, int) = add;
+binops.insert({"+, fp"}); // to solve the overloaded function issue.
+
+* Overloading, conversions, and operators*
+A constructor that can be called with a single argument defines an implicit
+conversion from the constructor's parameter type to the class type. Such
+constructors are referred to as converting constructors.
+
+Conversion operator defines conversion from one class type to another class
+type.
+
+Converting constructors and conversion operators are called user-defined
+conversions.
+Conversion operator: operator type() const;
+
+A conversion function must be a member function, may not specify a return type,
+and must have an empty parameter list. The function usually should be const.
+
+SmallInt si;
+si = 4; // implicitly convert 4 to SmallInt then calls SmallInt::operator=
+si + 3; // implicitly convert si to int followed by integer addition
+si +3.24;
+SmallInt si = 3.2; // two conversions. double to int, int to SmallInt(int);
+
+Avoid overuse of the conversion functions.
+
+Conversion operators can yield surprising results
+
+cin << 42; // legal if the conversion to bool were not explicit.
+Because bool is an arithmetic, a class-type object that is converted to bool
+can be used in any context where an arithmetic is expected.
+
+explicit operator int() const { return val; }
+si + 3; // error
+static_cast<int>(si) + 3; // explicitly request the conversoin.
+
+if an expression is used as a condition, an explicit conversion will still be
+applied by the compiler.
+
+Best: conversion to bool is usually intended for use in condition. As a result,
+operator bool ordinarily should be defined as explicit.
+
+Avoid ambiguous conversion. It is a bad idea to define classes with mutual
+conversions or to define conversions to or from two arithmetic types.
+
+Needing to use a constructor or a cast to convert an argument in a call to an
+overloaded function frequently is a bad design.
+
+The set of candidate functions for an operator used in an expression can
+contain both nonmember and member functions.
+
+Providing both conversion functions to an arithmetic type and overloaded
+operators for the same class type may lead to ambiguities between the
+overloaded operators and the built-in operators.
+
+## Chapter 15. Object-Oriented Programming
+Inheritance: base class, derived class.
+The base class defnies as virtual those functions it expects its derived
+classes to define for themselves.
+
+Dynamic binding is known as run-time binding. The decision can't be made until
+run time.
+In C++, dynamic binding happens when a virtual function is called through a
+reference (or a pointer) to a base class.
+Base classes ordinarily should define a virtual destructor. Virtual destructors
+s are needed even if they do not work.
+
+The derived class needs to override the definition it inherits from the base
+class.
+A base class specifies that a member function should be dynamically bound by
+preceding its declaration with the keyword `virtual`. Any nonstatic member
+function, other than constructors, may be a virtual. The virtual keyword
+appears only on the declaration inside the class. A function declared as
+virtual in the base class is implicitly virtual in the derived classes as well.
+non virtual function is resolved at compile time.
+
+Protected access control: accessiable by derived classes, but not others.
+
+* defining a derived class
+class derived_class : access_qualifier base_class {}
+
+The the deviation is public, the public members of the base class become part
+of the interface of the derived class as well. In addition, we can bind an
+object of a publicly derived type to a pointer or reference to the base type.
+
+single inheritance and multiple inheritance.
+
+Derived class frequently, but not always, override the virtual functions that
+they inherit. The new standard lets a derived class explicitly to put a
+"overrite" keyword after.
+
+A derived object contains multiple parts: a subobject containing the nonstatic
+members defined in the derived class, plus subobjects corresponding to each
+base class from which the derived class inherits.
+The base and derived parts of an object are not guranteed to be stored
+contiguously.
+
+Quote *p = &item;
+Quote &r = bulk;
+Binding a reference or a pointer to the base-part of a derived object:
+derived-to-base conversion.
+The fact that a derived object contains subobjects for its base classes is key
+to how inheritance works. It even contains the private part of the base class,
+though not able to access it directly.
+
+Each class controls how its member are initialized. A derived class cannot
+directly initialize the member of its base class. It must use a base-class
+constructor to initialize its base-class part.
+Bulk_quote(...):Quote(..), a(c) {}
+The base class is initialized first, and then the members of the derived class
+are initialized in the order in which they are declared in the class.
+
+The scope of a derived class is nested inside the scope of its base class.
+
+Key concept: respecting the base-class interface
+Even though the derived class can assign to the public or protected base-class
+members of its base class, it should not do so, instead of using a constructor.
+
+Static members are inherited, if not private. We can access it in multiple
+ways: base/derived class scope accessor, object member accessor, or implicit
+access.
+
+The declaration cantains the class name but does not include its derivation
+list.
+Class Bulk_quote;
+But a class must be defined, not just declared, before we can use it as a base
+class.
+Inheritance chain: the most derived object contains a subobject for its direct
+base and for each of its indirect bases.
+
+class NoDerived final {} // prevent inheritance.
+class Last final : Base{}
+
+The static type of a pointer or reference to a base class may differ from its
+dynamic type.
+static type is the type with which a variable is declared or that an expression
+yields.
+We cannot convert from base to derived when a base pointer or reference is
+bound to a derived object, because the compiler has no way to know it.
+If the base class has one or more virtual functions, we can use a dynamic_cast.
+If we know it is safe, we can use static_cast.
+
+The automaitc derived-to-base conversion applies only for conversion to a
+reference or pointer type. There is no such conversion from a derived-class
+type to the base-class type.
+
+When we initialized or assign an object of a base type from an object of a
+derived type, only the base-class part of the derived object is copied, moved,
+or assigned. The derived part of the object is sliced down.
+
+There is No implicit conversion from base to derived.
+
+* Virtual Functions*
+Ordinarily, if we do not use a function, we don't need to supply a definition
+for that function. However, we must define every virtual function, regardless
+of whether is is used, because the compiler has no way to determine whether a
+virtual function is used.
+
+Call to virtual functions May Be resolved at run time:
+Virtuals are resolved at run time only if the call is made through a reference
+or pointer. Only in these case is it possible for an object's dynamic type to
+differ from its static type.
+
+When a derived class overrieds a virtual function , it may, but is not required
+to, repeat the virtual keyword. Once a function is declared as virtual, it
+remains virtual in all the derived classes.
+Except for return type, a virtual function must have exactly the same parameter
+types as the base-class function that it overrides.
+
+It is legal for a derived class to define a function with the same name as a
+virtual in its base but with a different parameter list. The compiler will
+consider it as a different version.
+Using override to enlist the compiler in finding errors about virtuals.
+
+void f1(int) const final; //subsequent classes can't override it.
+
+Virtual function and default arguments
+When a call is made through a reference or pointer to base, the default
+arguments will be those defined in the base class. The derived function will be
+passed the default arguments defined for the base-class version of the
+function.
+So virtual functions that have default arguments should use the same argument
+values in the base and derived class.
+
+baseP->Quote::net_price(11); //cicumveting the virtual mechanism
+Ordinarily, only code inside member functions (or friend) should need to use
+the scope operator to circumvent the virtual mechanism.
+
+* Abstract Base Class *
+double net_price(std::size_t) const = 0; // a pure virtual function.
+We can provide a definition for a pure virtual function, but do not have to.
+On the contrary, we have to define a virtual function.
+
+Classes with a pure virtual function are abstract base classes.
+
+**Access control and inheritance**
+protected members, like private, are inaccessiable to users of the class, and
+like public, are accessible to members and friends of classes derived from this
+class.
+But a derived class member or friend may access the protected member of the
+base class only through a derived object.
+
+The derivation access specifier has no effect on whether members (and friends)
+of a derived class may access the member of its own direct base class.
+The purpose of the derivation access specifier is to control the access that
+users of the derived class-including other classes derived from the derived
+class-have to the members inherited from Base.
+
+Accessibility of Derived-to-Base conversion
+For any given point in your code, if a public member of the base class would be
+accessible, then the derived-to-base conversion is also accessible, and not
+otherwise.
+A class that is used as a base class makes its interface member public. An
+implementation member should be protected if it provides an operation or data
+that a derived class will need to use in its own implementation. Otherwise,
+they should be private.
+
+Friendship is not transitive.
+Friendship is not inherited; each class controls access to its members.
+
+Exempting individual members:
+public:
+    using Base::n;
+A derived class may provide a using declaration only for names it is permitted
+to access.
+
+By default, a derived class defined with class keyword has private inheritance;
+a derived class defined with struct has public inheritance.
+
+**Class Scope under inheritance**
+The scope of a derived class nests inside the scope of its base classes.
+Name lookup happens at __compile time__.
+The static type of an object, reference, or pointer determines which members of
+that object are visible.
+Like any other scope, a derived-class member with the same name as a member of
+the base class hides direct use of the base-class member.
+
+Using the scope operator to use Hidden Members
+
+Key concetp: name lookup and inheritance
+p->mem()
+1. first determine the static type of p.
+2. look for mem in the p class. If not find, look in the inheritance chain.
+3. once mem is found, do normal type checking.
+4. the compiler generates code, depending on whether it is virtual or not:
+    - if virtual and the call is made through a reference or pointer, then the
+      compiler generates code to determine at run time which version to run
+      based on the dynamic type of the object.
+    - Otherwise, the compiler generates a normal function call.
+
+**As usual, name lookup happens before type checking**
+As in any other scope, if a member in a derived class has the same name as a
+base-class member, then the derived member hides the base-class member within
+the scope of the derived class. The base member is hidden even if teh functions
+have different parameter lists. There is no overloading in the scope.
+d.Base::memfnc() to skip the hidding.
+
+Overriding overloaded functions
+If a derived class wants to make all the overloaded versions available through
+its type, then it must override all of them or none of them.
+using function names adds all the overlaoded instances of that function to the
+scope of the derived class, and the derived class needs to define only those
+functions truly depend on its type. It can use the inherited definitions for
+the others.
+
+**Constructors and Copy Control**
+
+// virtual destructor needed if a base pointer pointing to a derived object is
+deleted.
+virtual ~Quote() = default; // dynamic binding for the destructor
+Quote *p = new Bulk_Quote;
+delete p;  //destructor for Bulk_Quote is called.
+
+Executing delete on a pointer to base that points to a derived object has
+undefined behavior if the base's destructor is not virtual.
+Once a function is virtual, the corresponding function in its derived class is
+implicitly virtual.
+
+If a class defines a destructor- even if it uses = default to use the
+synthesized version - the compiler will not synthesize a move operation for
+that class.
+
+Base classes and deleted copy control in the derived.
+
+Default copy contorl chain in the inheritance chain.
+
+B(const B&) = deleted; // B won't have a synthesized move constructor.
+
+Because lack of a move operation in a base class suppress synthesized move for
+its derived classes, base classes should ordinarily define the move operations.
+
+When a derived class defines a copy or move operation, that operation is
+responsible for copying or moving the entire object, including base-class
+members.
+
+By default, the base-class default constructor initialize the base-class part
+of a derived object. If we want copy (or move) the base-class part, we must
+explicitly use the copy(or move) constructor for the base class in the
+derived's constructor initializer list.
+
+The derived class assignement oerpator must assign its base part explicitly.
+Unlike the constructors and assignment operators, a derived destructor is
+responsbile only for destroying the resources allocated by the derived class.
+Object are destructed in the opposite order from which they are constructed:
+the derived destructor is called first.
+
+Note: if a constructor or a destuctor calls a virtual, the version that is run
+is the one corresponding to the type of the constructor or destructor itself.
+
+**Inherited Constructor**
+class Bulk_quote : public Disc_quote {
+public:
+    using Disc_quote::Disc_quote; //inherit Disc_quote's constructors
+}
+Ordinarily, a using declaration only makes a name visible in the current scope.
+When applied to a constructor, a using declaration causes the compiler to
+generate code: derived(params) : base(args) {}.
+A using declaration can't specify explicit or constexpr, but it can inherite
+access qualifer and explicit and constexpr. But the default arguments cannot be
+inherited.
+
+**Containers and Inheritance**
+Because derived objects are "sliced down" when assigned to a base-type object,
+containers and types related by inheritance do not mix well. When we can put
+derived class object in the container, it will be sliced and copied into the
+container.
+
+So Put (Smart) pointer, not objects, in containers.
+Just as we can convert a ordinary pointer to a derived type to a base-class
+type, we can also conert a smart pointer to a derived  type to a smart pointer
+to an base-class type.
+
+virtual Quote* clone() const &{ return new Quote(*this);}
+virtual Quote* clone() && { return new Quote(std::move(*this));} // clone is
+overloaded based on whether it is called on an lvalue or an rvalue.
+
+In C++, dynamic binding appies only to functions declared as `virtual` and
+called through a reference or pointer.
+virtual Quote* clone()
+
+## Chapter 16. Templates and Generic Programming
+OOP deals with types that are not known until run time, whereas in generic
+programming the types become known duing compilation.
+
+**Function Template**
+template <typename T>
+int comapre(const T &v1, const T v2) {}
+
+A templaet definition starts with the keyword template followed by a `template
+parameter list` which can not be emtpy.
+template instantiation
+Each type parameter must be preceded by the keyword `class` or `typename`.
+Template arguments used for nontype template parameters must be constant
+expressions.
+
+When we call a function template, the compiler uses the arguments of the call
+to deduce the template argument(s) for us.
+
+template <typename T> inline T min(const T&, const T&);
+The inline or constexpr can be used in a function template.
+Template programs should try to minimize the number of requirements placed on
+the argument types.
+
+Defintions of function templates and member functions of class templates are
+ordinarily put into header files.
+Ordinarily, when we call a function, the compiler needs to see only a
+declaration for the function, but the definition. As a result, we put class
+defintions and function declarations in header files and defintion of ordinary
+and class-member functions in source files.
+
+It is up to the caller to guarantee that the arguments passed to the template
+support any operations that templates uses, and tha those operations behave
+correctly in the context in which the template uses them.
+
+The code is not generated until a template is instantiated.
+
+**Class Templates**
+template <typename T> class Blob {}
+Each instantiation of a class constitues an independent class.
+As with any class, we can define the member of a class tempalte either inside
+or outside of the class body. As with any other class, members defined inside
+the class body are implicitly inline.
+
+template <typename T>
+return-type Blob<T>::member-name(param-list)
+
+We can simplify use of a template class name inside class code.
+Inside the scope of a class template, we may refer to the template without
+specifying template arguments.
+
+*Class Templates and Friends*
+In order to refer to a specific instantiation of a template, we must first
+declare the template itself.
+template <typename> class BlobPtr;
+
+General and specific template friendship:
+template <typename T> class Pal;
+class C {
+    template <typename T> friend class Pal2;// no forward declaration needed
+when we befriend all instantiation;
+    firend class Pal<C>;
+};
+
+Befriending the Template's own type parameter
+
+Template type aliases(two forms):
+typedef Blob<string> strBlob;
+template<typename T> using twin = pair<T, T>;
+template<typename T> using partNo = pair<T, unsigned>;
+
+static members of class template:
+template <typename T> class Foo {
+    private:
+        static std::size_t ctr;
+}
+Foo<int> f1, f2, f3; // all share the same ctr;
+template <typename T> size_t ctr = 0; // define and initialize
+
+*Template parameters and scope*
+We cannot reuses names of templates parameters in the template. A parameter
+name cannot be resued.
+As with function parameters, the names of a template parameter need not be the
+same across the declarations and the definition of the same template.
+
+*Using class members that are types*
+We can use the scope operator :: to access both static members and type members.
+template <typename T>
+typename T::value_type top(const T& c); // when we wan to inform the compiler
+that a name, e.g., value_type, represents a type, we must use the keyworkd typename, not class.
+Because the compiler doesnot know whether T::mem is a static member or a type.
+
+*Default template arguments*
+template <typename T, typename F = less<T>>
+int compare(const T &v1, const T &v2, F f = F()){}
+
+*Tempalte Default arguments and class templates*
+Whenever we use a class template, we must always follow the template's name
+with brackets.
+template <class T= int> class Numbers{};
+Numbers<> foo_number;
+
+**Member Templates**
+*member template*
+class Foo {
+    public:
+        template <typename T> void operator()(T *p) const { delete p;}
+}
+member templates of class tempaltes:
+When we define a member template outside the body of a class template, we must
+provide the template parameter list for the class template and for the function
+template.
+template <typename T>
+template <typename It> Blob<T>::Blob(It b, It e):data(std::make_shared<std::vector<T>>(b,e)) {}
+
+*Constrolling instantiation*
+To avoid the overhead of instantiating the same template in multiple files, we
+can use explicit instantiation.
+extern template declaration; // instantiation declaration
+template declaration; // instantiation declaration
+
+etc:
+extern template class Blob<string>; //declaration
+template int compare(const int&, const int&); // definition
+There may be several extern declarations for a given instantiatin but there
+must be exactly one defition for that instantiation.
+
+Efficiency vs flexibility:
+run time deleter for shared_ptr;
+compile time deleter for unique_ptr.
+
+**Template Argument Deduction**
+the process of determining the template arguments from the function arguments
+is known as template argument deduction.
+
+*conversion and template type parameters*
+As usual, top-level consts in either the parameter or the argument are ignored.
+The only other conversions performed in a call to a function template are:
+1. const conversions: A function parameter that is a reference or pointer to a
+const can be passed a reference or pointer to a non-const object.
+2. Array or function-to-pointer conversions: if the function parameter is not a
+reference type, then the normal pointer conversion will be applied to arguments
+of array or function type.
+Other conversions, such as the arithmetic conversions, derived-to-base, and
+user-defined conversions, are not performed.
+
+Function parameters that use the same template parameter type.
+template <typename A, typename B>
+int flexibleCompare(const A& v1, const B& v2){}
+argument types can differ but must be compatible.
+
+Normal Conversion still Applies for Orindary Arguments
+
+Function-Template explicit arguments
+template <typename T1, typename T2, typename T3>
+T1 sum(T2, T3);
+auto val3 = sum<long long>(i, lng); // specify explicitly T1.
+match from left to right.
+
+Normal conversion apply for explicitly specified arguments
+
+*Trailing return types and type tranformation*
+template <typename t>
+auto fcn(It beg, It end) -> decltype(*beg){}
+// if beg is called on an iterator of strings, it will return string&.
+
+decltype((variable)) is always a reference type, but decltype(variable) is a
+reference type only if variable is a reference.
+When we apply decltype to an expression(other than a variable), the result is a
+reference type if the expression yields a lvalue.
+decltype(*p) is int &, assuming p is int*.
+decltype(&p) is int**, a pointer to a pointer to an int.
+
+*The type transformation library template classes*
+defined in the `type_traits` header.
+In general the classes in type_traits are used for so-called template
+metaprogramming.
+auto fcn2(It beg, It end) -> typename remove_reference<decltype(*beg)>::type
+{};
+Each tempalte has a public member named `type` that represents a type.
+
+*Function pointers and argument Deduction*
+template <typename T> int compare(const T&, const T&);
+int (*pf1) (const int&, const int&) = compare;
+When the address of a function-template instantiation is taken, the context
+must be such that it allows a unique type or value to be determined for each
+template parameter.
+
+Template Argument Deduction and References
+Type deduction from Lvalue reference function parameters.
+const int& a = 20; // OK; a temporary int is created and its life is extended.
+int& b = 10; // error
+
+Type deduction from rvalue reference function parameters
+template <typename T> void f3(T&&);
+f3(42);
+
+*Reference Collasping and Rvalue Reference Parameters*
+f3(i); // legal exception
+Tow exceptions to normal binding rules that allow this kind of usage. These
+exception are the foundation for how library facilities such as move operate.
+1. when f3(i) is called on f3(T&&), the compiler deduces the type of T as int&,
+not int, the argument's lvalue reference type.
+2. Oridinarily, we cannot directly define a reference to a reference. In all
+but one case, the references collapse to form an ordinary lvalue reference
+type. X& &, X& &&, X&&, & all -> X&, while X&& && -> X&&.
+Reference collasping applies only when a reference to a reference is created
+indirectly, such as in a type alias or a template parameter.
+
+Reference collasping applies `only` when a reference to a reference is created
+indirectly, such as in a type alias or a template parameter.
+
+Note: an argument of any type can be passed to a function parameter that is an
+rvalue reference to a template parameter type(T&&). When an lvalue is passed to
+such a parameter, the function parameter is instantiated as an ordinary, lvalue
+reference(T&).
+It's worth noting that function templates that use rvalue references often use
+overloading:
+template <typename T> void f(T&&); // bind to modifiable rvalues
+template <typename T> void f(const T&); // lvalues and const rvalue
+
+*Understanding std::move*
+How move works:
+template <typename T>
+typename remove_reference<T>::type&& move(T&& t) {
+    return static_cast<tyepname remove_reference<T>::type&&>(t);
+}
+string s1("hi"), s2;
+s2 = std::move(string("bye!")); // moving from an rvalue;
+s2 = std::move(s1); //ok, but after assignment s1 has indertermine value.
+
+static_cast from an Lvalue to an Rvalue reference is permitted
+Binding an rvalue reference to an lvalue gives code that operate on the rvalue
+reference permission to clobber the lvalue.
+
+*Forwarding*
+A function parameter that is an rvalue reference to a template type parameter
+(T&&) preserves the constness and lvalue/rvalue property of its corresponding
+argument.
+When used with a function parameter that is an rvalue reference to template
+type parameter(T&&), `forward` preserves all the detail about an argument's
+type.
+template <typenamt F, typename T1, typename T2>
+void flip(F f, T1 &&t1, T2 &&t2) {
+    f(std::forward<T2>(t2), std::forward<T1>(t1));
+}
+
+**Overloading and Templates**
+When there are several overloaded templates that provides an equally good match
+for a call, the most specialized version is preferred.
+When a nontemplate function provides an equally good match for a call as a
+function template, the nontemplate version is preferred.
+
+*Variadic templates*
+A variadic templates is a template function or class that can take a varying
+number of parameters. And parameter pack.
+template <typename T, typename... Args>
+void foo(const T &t, const Args& ... rest);
+sizeof...(args)
+
+Variadic functions are often recursive.
+
+Pack expansion
+debug_rep(rest)... // call debug_rep on each member of rest parameter pack.
+
+Forwarding parameter packs
+The emplace_back member of the library container is a variadic member template
+that uses its arguments to construct an element directly in space managed by
+the container.
+
+std::forward<Args>(args)... // forward to preserve the type information
+template <typename... Args>
+void fun(Args&&... args) {
+    work(std::forward<Args>(args)...);
+} // expands both the template parameter pack and the function parameter pack.
+Because the parameter to fun are rvalue references, we can pass arguments of
+any type to fun; because we use std::forward to pass those arguments, all type
+information about those arguments will be preserved in the call to work.
+
+**Template Specialization**
+template<> //<> inciates that arguments will be supplied for all the template
+parameters of the original template.
+template<>
+int compare(const char* const &p1, const char* const &p2) {
+    return strcmp(p1, p2);
+}
+Templates and their specializations should be declared in the same header file.
+Declarations for all the templates with a given name should be appear first,
+followed by any specifializations of those templates.
+
+specialization instantiate a template; they do not overload it. As a result,
+specialization do not affect function matching.
+
+*class template specializations*
+namespace std {
+template<>
+    struct hash<Sale_data> {}
+} // open the namespace
+We can patially specialize only a class template. We cannot partially
+specialize a function template.
+
+*Summary*
+The library algorithms are function templates and the library containers are
+class templates.
+
+## Specialized Library Facilities
+*tuple*
+tuples can have any number of members.
+tuple<T1,T2,...,Tn> t(v1, v2, v3,...., vn);
+make_tuple(v1,v2,...,vn)
+get<0>(item); // return a reference to the first item member.
+Because tuple defines the < and == operators, we can pass sequences of tuples
+to the algorithms and can use a tuple as key type in an ordered container.
+
+*bitset*
+bitset<n> b; // initialize with ULL or a string
+operations on bitsets.
+
+*Regular expression*
+regular expression library components
+regex (and wregex) operations
+The regular expression is not interpreted by the C++ compiler. The syntactic
+correctness of a regular expression is evaluated at run time.
+
+*Random Numbers*
+C++ program should not use the library rand function. Instead, they should use
+the default_random_engine along with an appropriate distribution object.
+uniform_int_distributed<unsigned> u(0,9);
+default_random_engine e;
+cout << u(e) << " ";
+
+A given random-number generator always produces the same sequence of numbers. A
+function with a local random-number generator should make that generator(both
+the engine and distribution objects) static. Otherwise, the function will
+generate teh identical sequence on each call.
+
+Using time as a seed usually doesn't work if the program is run repeatly as
+part of an automated process; it might wind up with the same seed several
+times.
+default_random_engine e1(time(0));
+
+*IO library*
+
+
+## Tools for large programs
+**Exception handling**
+Stack unwinding
+An exception that is not caught terminate the program.
+
+Objects are automatically destoryed during stack unwinding.
+During stack unwinding, destructors are run on local objects of class type.
+Because destructors are run automatically, they should not throw. If, during
+stack unwinding, a destructor throws an exception that it does not also catch,
+the program will be terminated.
+
+The compiler manages the exception object space.
+Throwing a pointer requires that the object to which the pointer points exist
+wherever the corresponding handler resides.
+
+*Catching an exception*
+In exception declaration,
+We can omit the name of the catch parameter if the catch has no need to access
+the thrown expression.
+Ordinarily, a catch that takes an exception of a type related by inheritance
+ought to define its parameter as a reference.
+Multiple catch clauses with types related by inheritance must be ordered from
+most derived type to least derived.
+
+Using 'throw' to rethrow 
+An empty throw can appear only in a catch or in a function called from a catch.
+
+The Catch-All Handler: catch (...) // matches any type of excpetion
+catch(...) is often used in combination with a rethrow expression.
+
+Function try blocks and constructors
+template <typename T>
+Blob<T>::Blob(std::initializer_list<T> li) try:
+data(std::make_shared<std::vector<T>(i1)) {} catch() {}
+
+void recoupt(int) noexcept; // won't throw
+Either the function won't throw, or the whole program will terminate. The
+caller escapes responsibility either way.
+
+void f() noexcept(noexcept(g())); // f has same exception specifier as g.
+
+Hiearchy:
+1. exception:
+    - bad_cast
+    - runtime_error: overflow_error, underflow_error, range_error
+    - logic_error: domain_error, invalid_argument, out_of_range, length_error
+    - bad_alloc
+The only operations taht the exception types define are the copy constructor,
+copy-assignment operator, a virtual destructor, and a virtual member named
+what.
+The exception, bad_cast, and bad_alloc also define a default constructor. The
+runtime_error and logic_error do not have a default constructor but do have
+constructors that take a C-style cstring or a library string.
+
+**Namespaces**
+A namespace is a scope.
+
+namespace Foo {
+    class A {};
+    B operator+(const Sale_data&, const Sale_data&);
+}
+Any declarations that can appear at global scope can be put into a namespace:
+classes, variable(with their initializations), function(with their
+definitions), templates, and other namespaces.
+
+Names defined in a namespace may be accessed directly by other members of the
+namespace, including scope nested within those members.
+
+Namespaces can be discontinguous
+namespace nsp{} either defines a new namespace or adds to an existing one.
+
+1. Namespace members that define classes, and declaration for the functions and
+object that are part of the class interface, can be put into header files.
+These headers can be included by files that use those namespaces members.
+2. The definitions of namespace member can be put int separate source files.
+
+Namespaces that define multiple, unrelated types should use seperate files to
+represent each type(or each collection of related type) that the namespaces
+defines.
+
+Ordinarily, we do not put a #include inside the namespace.
+
+Defining Namespace members
+It is possible to define a namespace member outside its namespace definition.
+
+The Global namespace
+The global namespace is implicitly declared and exists in every program.
+::member_name // access a global member
+
+Nested Namespaces
+
+inline namespaces
+inline namespace FifthEd{
+
+}
+
+Unnamed Namespaces is local to a particular file and never spans multiple
+files.
+In C, a global entity declared `static` is invisible outside the file in which
+it is declared.
+
+**Using namespace members**
+namespace primer = cplusplus_primer;
+namespace Qlib = aaa:bbb:QueryLib;
+
+A using declaration introduces only one namespace member at a time.
+A using declaration can appear in global, local, namespace, or class scope. In
+class scope, such declarations may only refer to a base class member.
+
+using directives:
+using namespace foo; // makes all the names from foo visible.
+
+using declaration only makes the name directly accessbile in the local scope.
+In contrast, a using directive causes all the names appearing in the enclosing
+namespace scope.
+
+The one place where using directives are useful is in the implementation files
+of the namespace itself.
+
+Argument-dependent lookup and parameters of class type
+When we pass an object of a class type to a function, the compiler searches the
+namespace in which the argument's class defined in addition to the normal scope
+lookup.
+
+lookup and std::move and std::forward

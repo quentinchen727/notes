@@ -6,8 +6,7 @@
 # Lastest Install vim 8 on Devserver
 git clone https://github.com/vim/vim.git vim
 
-sudo yum install cscope ncurses ncurses-devel ncurses-libs ncurses-base lua
-lua-devel python-libs ruby ruby-devel
+sudo yum install cscope ncurses ncurses-devel ncurses-libs ncurses-base lua lua-devel python-libs ruby ruby-devel
 
 cd vim
 make distclean  # if you build vim before
@@ -18,3 +17,9 @@ sudo yum remove 'vim-common.x86_64' # remove vim7 component
 sudo make install
 rm /usr/bin/vim # remove old vim
 
+
+## cscope
+CSCOPE_DB=any_cscope_db
+export CSCOPE_DB
+then in vim, you can do "cscope add $CSCOPE_DB", and then "cscope show" to
+veiry.

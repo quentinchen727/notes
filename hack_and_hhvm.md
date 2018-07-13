@@ -160,7 +160,8 @@ Restrictions on Shapes:
 lambda expression: ==>, it can automatially capture enclosing scope.
 while in php, you have to capture the enclosing variables manually.
 
-Constructor parameter promotion: __construct(private int id = 1, pubic name = 'foo')
+Constructor parameter promotion: __construct(private int id = 1, pubic name =
+'foo')
 
 Attributes: <<someString>>, then use ReflectionFunction/Class/Method to access them.
 Special attibutes: __Override, __ConsistentConstruct, __Memoize(specially by HHVM)
@@ -514,7 +515,7 @@ History Hack collections: Vector, Map and Set. Good for compatiblity with php ar
 functions, and adding other utility functions and types. Bad for `reference
 semantics` and slowness.
 
-Haxc Arrays: `vec`, `dict`, and `keyset`. They are best. Value semantics, solve
+Hack Arrays: `vec`, `dict`, and `keyset`. They are best. Value semantics, solve
 typing, can use with php library functions plus new HSL, no key coercion, and
 accessing unset keys will throw. Fast!!!
 vec[1,2,3] //literal;
@@ -530,3 +531,24 @@ C\contains_key($k, 'foo');
 NOTE: Prefer Hack arrays(vec, dict, keyset) over Hack Collections(Vector, Map,
 Set) and PHP (array) whenever possible.
 
+## Trait in PHP
+It is about horizontal composition. It will avoid the typical problems
+associated with multiple inheritance and Mixins.
+* Precedence *
+Current method overrides trait, and trait overwrites inherited.
+* Conflict Resolution *
+If two traits have the same names, use 'insteadof' to solve the conflict.
+    use A, B {
+        B::smallTalk insteadof A;
+        A::bigTalk insteadof B;
+}
+* Change method visibility *
+use A { smalltalk as priavte mySmalltalk; }
+* Compose a trait from traits *
+* Abstract trait members *
+Abstract methods of the trait imposes requriements upon the exhibiting class.
+* Traits can define both static members and static methods *
+* Properties *
+If a trait defines a property then a class cannot define a property with the
+same name unless it is compatiable(some visibility and initial value),
+otherwise a fatal error is raised.
