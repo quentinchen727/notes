@@ -552,3 +552,15 @@ Abstract methods of the trait imposes requriements upon the exhibiting class.
 If a trait defines a property then a class cannot define a property with the
 same name unless it is compatiable(some visibility and initial value),
 otherwise a fatal error is raised.
+
+
+## isset:
+bool isset(mixed $var[, mixed $...]]) determines if a var is set and is not
+null.
+
+PHP quirk: $a ? 1 : 2; it will treat '0' as wrong, so you should explicitly
+test it using Str\is_emtpy($a);
+
+$this refer to the current object/instance, while self:: refer to the place
+where the function/variable is defined. static:: refers to the scope of the
+class called.

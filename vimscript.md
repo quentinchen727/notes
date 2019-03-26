@@ -11,7 +11,7 @@ You need to type in all the commands, and do all the exercises.
 
 ## 1 Echoing Messages
 " ephemeral message
-:echo "hello" 
+:echo "hello"
 
 " Persistent echoing
 :echom "Hello again" // print to a list of messages. Use messages to check.
@@ -327,9 +327,9 @@ augroup END
 Uset git to sync up the configure. Create a symbolic link to ~/.vimrc.
 
 18.3 Short Names
-:setlocal wrap 
+:setlocal wrap
 :setl wrap
- 
+
 ## 19 Variables
 :let foo= "bar"
 :let foo = 11
@@ -354,9 +354,35 @@ value.
 :let &l:number = 0
 
 19.3 Registers as variables
-Use @ to access registers.
-:let @a = "hello!"
-:echo @a // 
+** registers **
+- unnamed "": text deleted with "d", "D", "c", "C", "s", "S" or copied with
+  "y", regardless of whether or not a specific register was used. It is always
+pointing to the last used register, except the blackhole "_.
+The contents of the unnamed is used for any put command used without a
+specified register.
+- numbered "0 to "9: 0 contains the text from the most yank command not
+  specified by any other regiester, while 1 contains the most recently deleted
+or changed one, unless the command specified another register or the text is
+less than one line, then the "- is also used. With each sucessive deletion or
+change, the contents will be shifted to higher registers.
+- small "-
+whether or not a specific register was used. It is always
+pointing to the last used register, except the blackhole "_.
+The contents of the unnamed is used for any put command used without a
+specified register.
+- named "a to "z or "A to "Z: small case for replacing, big case for appending.
+- ". : last insert text
+- "% : the name of the current file
+- ": : the most rencet executed command line.
+- "# : the name of the alternate file
+- "* : used in GUI
+- "~ : drag and drop content
+- "_ : blackhole registers
+- "/ : the most recent search-pattern. U could change it to different content.
+
+
+  Use @ to access registers.  :let @a = "hello!"
+:echo @a //
 "ap  // paste the contents of registers a here.
 :echo @/   "echo the latest search
 :echo @"    /* echo the latest copy */
@@ -511,6 +537,8 @@ normal.
 normal doesn't recognize any special characters.
 :help helpgrep
 <c-o> to excute a command in insert mode and return to insert mode.
+:nn <leader>d ddi<c-g>u<esc>dd  " This breaks the undo sequence. We can undo
+one line one time.
 
 ## 30 Execute Normal!
 :execute "normal! gg/foo<cr>dd"
@@ -582,11 +610,14 @@ nnoremap <leader>g :set operatorfunc=GrepOperator<cr>g@
 function! GrepOperator(type)
     echom "Test"
 endfunction
+g@ calls the defined function.
 33.3 Visual Mode
 vnoremap <leader>g :<c-u>call GrepOperator(visualmode())<cr>
+<c-u> delete all characters before the cursor
+call anyFunction
 33.4 Motion Types
     echom a:type
-mode: v, V, , char, line. 
+mode: v, V, , char, line.
 viw<leader>g: mode v
 Vjj<leader>g: mode V
 <leader>giw: mode char
@@ -595,10 +626,141 @@ Vjj<leader>g: mode V
 echom @@ // @@ is the unamed register that Vim places text into when you yank
 or delete without specify a particular register.
 33.5 Escaping the Search term
+grep! does not jump to the first line of serach, but the resuts are stored in
+the quicklist.
 :help visualmode()
 :help c_ctrl-u
 :help operatorfunc
 :help map-operator
 
 ## 34 Case Study: Grep Operator, Part three
+function! GrepOperator(type)
+    let saved_unnamed_register = @@
+    if a:type ==# 'v'
+        normal! `<v`>y
+    elseif a:type ==# 'char'
+        normal! `<v`>y
+    else
+        return
+    endif
+    silient execute "grep! -R " . shellescape(@@) . " ."
+    copen
+    let @@ = saved_unnamed_register
+endfuntion
 
+34.2 Namespacing
+nnoremap <leader>g :set operatorfunc=<SID>GrepOperator<cr>g@
+function! s:GrepOperator(type) : s: means only search in current script
+namespace.
+<SID> will be expanded into <SNR>number_function
+
+## 35 Lists
+heterogenous list: [1, 2, ['a',3]]
+index like python, from front or back.
+slice [12,2,3][0:2]
+U can safely exceed the uppper bound.
+U can also index and slice string. But u cannot use negatkive indeces.
+Concantenation: ['a', 'b'] + ['c'] creates a new list.
+add(list, 'a'), len(list), get(list, 0, 'default'), index(foo, 'b'), join(foo,
+'seperator')
+
+## 36 Looping
+for i in [1,2,3]
+    let c += 1
+endfor
+
+while c<= 4
+endwhile
+
+## 37 Dictionaries
+similiar to Python's dicts, Ruby's hash, and Js's objects.
+Value are heterogenous, but keys are always coerced to strings.
+U can add a common after the last element in the dictionary: {'a' :1, 1 :
+'foo',}.
+Vimscript coerces the index to a string before performing the lookup.
+two styles of lookup: [] or .a if the key is a string consisting only of
+letters, digits and/or underscores.
+remove(foo,'a') remvoes entries from a dictionary and returns the value.
+unlet will only remove the entry.
+has_key(foo, 'a')
+keys(foo), values(foo) pull keys/values.
+
+## 38 Toggling
+function! FoldColumnToggle()
+    if &foldcolumn
+        setlocal foldcolumn=0
+    else
+        setlocal foldcolumn=4
+    endif
+endfunction
+
+## 39 Functional Programming
+use function as variables and use data structure with immutable state.
+
+let Myfunc = function("Pop"). If function variable, names must start with a capital letter.
+
+High-order functions are functions that take other functions and do something
+with them.
+
+## 40 Paths
+expand('%'): % means the current file
+expand('%:p'): :p tells Vim that you want the absolute path.
+fnamemodify('foo.txt',':p') : more flexible vim fucntion.
+
+echo globpath('.', '*'): return a string of all files seperated by newlines.
+echo split(globpath('.', '*'), '\n'): if using **, it means recursive.
+
+helpful:
+expand(), fnamemodify(), filename-modifiers, simplify(), resolve(), globpath(),
+wildcards
+
+## 42 Plugin Layout in the dark ages
+Inside ~/.vim:
+- colors: for all the colorschems
+- plugin: run once every time Vim starts.
+- ftdetect: filetype dection. Run every time you start Vim. Should set up
+  autocommands taht detect and set the filetype of files and nothing else.
+- ftplugin: The naming of these files matters. If you set filetype=foo, vim
+  will look for foo.vim in ~/.vim/ftplugin/. If that file exists, it will run
+it. Or it will look for ~/.vim/ftplugin/foo/, and execute all the files inside.
+It should only setlocal, as each a buffer's filetype is set. Local only.
+- indent: indentation related to each file type. Local only.
+- compiler: compiler-related options. Local only.
+- after: loaded every time Vim starts, but after the files in the
+  ~/.vim/plugin/. This allows you to `override` Vim internal files.
+- autoload: delay the loading of your plugin's code until it is actually
+  needed.
+- doc: documentation.
+
+RuntimePath:
+:set runtimepath=/user/qch/sss
+
+Pathogen or Plug will add any directory inside ~/.vim/bundle into your
+runtimepath.
+
+Vim automatically wraps the contens of ftdetect/*.vim files in autocommand
+groups for you.
+au BufNewFile,BufRead *.pn set filetype=potion
+
+Syntax Highlighting
+if exists("b:current_syntax")
+    finish
+endif
+
+let b:current_syntax="potion" // Those two blocks prevents reloading it again,
+just like header guard in C.
+
+To highlight a piece of syntax:
+1. define a "chunk" of syntax using `syntax keyword` or related command, e.g.
+    syntax keyword potionKeywords loop times to while
+2. link "chunks" to highlighting group, e.g.
+    highlight link potionKeyword Keyword
+syntax keyword does not reset the syntax group -- it adds to it!
+
+syntax keyword potionFunctions print join string
+highlight link potionFunctions Function
+
+:help iskeyword, group-name, syn-keyword
+
+# open link in vim
+`gx`

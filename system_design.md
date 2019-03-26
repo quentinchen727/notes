@@ -405,3 +405,32 @@ element exisits.
 Memcache is a look-aside cache, which means in case of a cache miss, you hav
 e to populate the entry by yourself, different from look-through/cache-through
 cache.
+
+## ZooKeeper
+ZooKeeper is a distributed co-ordination service to manager large set of hosts.
+It becomes a standard for organized service used by Hadoop, Hbase, and other
+distributed frameworks. 
+Physical: Cluster + Node
+Logical: Server + client. Server applications are distributed and have a common
+interface.
+Benifits of Distributed Applications:
+- Reliability
+- Scalability
+- Transparency
+Challenges of Distributed Applcations:
+- Race condition
+- Deadlock
+- Inconsistency
+
+Services provided:
+- Naming service: identifying the nodes by names;
+- Configuration management
+- Cluster management
+- Leader election
+- Locking and synchronization service
+- Highly reliable data registry.
+
+##Database
+Database engine is composed of stoarge engine and query processor.
+Presto is designed for running interactive analytic queries against different
+data sources with different data store.

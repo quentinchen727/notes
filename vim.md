@@ -23,3 +23,25 @@ CSCOPE_DB=any_cscope_db
 export CSCOPE_DB
 then in vim, you can do "cscope add $CSCOPE_DB", and then "cscope show" to
 veiry.
+
+
+## vim
+https://github.com/Valloric/YouCompleteMe/wiki/Building-Vim-from-source
+
+./configure --with-features=huge \
+            --enable-multibyte \
+	    --enable-rubyinterp=yes \
+	    --enable-pythoninterp=yes \
+	    --with-python-config-dir=/usr/lib64/python2.7/config \
+	    --enable-python3interp=yes \
+	    --with-python3-config-dir=/usr/lib64/python3.5/config-3.5 \
+	    --enable-perlinterp=yes \
+	    --enable-luainterp=yes \
+        --enable-gui=gtk2 \
+        --enable-cscope \
+        --enable-ballooneval \
+        --enable-clipboard \
+        --enable-mzscheme \
+	   --prefix=/usr/local
+
+sudo make install

@@ -26,7 +26,7 @@ seperation of concerns.  If you use React, you can carry your knowledge to the
 next project even if it's not in React.
 
 2. Fast UI.
-React updates onoy those parts are absolutely necessary so taht the internal
+React updates only those parts are absolutely necessary so that the internal
 state(virtual DOM) and the view(real DOM) are the same. Vritual Dom exists only
 in Javascript memory. Do unit testing with Jest on the command line.
 React is back-end agnostic. You can integrate it with any back end and any
@@ -36,10 +36,10 @@ front-end data library.
 
 The react library is split into two packages: React Core and ReactDom.
 Various rendering targets, not just DOM.
-The spepartion of React Dore form ReactDom makes it easier to share code
+The spepartion of React Core form ReactDom makes it easier to share code
 between React and React Native libraries(use for native mobile iOS and Android
 development)
-The spepartion of React Dore form ReactDom makes it easier to share code
+The spepartion of React Core form ReactDom makes it easier to share code
 between React and React Native libraries(use for native mobile iOS and Android
 development).
 JSX - a tiny language that lets developers write React UIs more eloquently. You
@@ -51,9 +51,9 @@ Angular, backbone, and ember are frameworks for building SPAs.
 Other template engines: Underscore, Handlebars, and Mustache.
 
 JSX is a little syntax for writing React objects in Javascript using <> as in
-XML/HTML.
+XML/HTML./<>
 
-React is a view layer. Developers need to pari React with a routing and/or
+React is a view layer.??? Developers need to pair React with a routing and/or
 modeling library.
 
 React is one-way data-binding, while Angular is two-way.
@@ -118,7 +118,7 @@ virutal/in-memory store.
 If you must, you should use the data-Name prefix, otherwise they won't be
 rendered by DOM.
 Use {...this.props} to pass every property to the child.
-<h1 {...this.props}>
+<h1 {...this.props}> // <>
 The rest is used in a function definition/declaration, and spread is used in
 calls and literals.
 
@@ -201,7 +201,7 @@ DOM events or other front-end libraries.
 Life cycles:
 - Happens when an element is created and lets you set the default properties
   and the initial state.
-- Mouinting:
+- Mounting:
     1. componentWillMount()- Happens before mounting to the DOM
     2. componentDidMount()- Happnes after mounting and rendering
 - Updating:
@@ -209,7 +209,7 @@ Life cycles:
        about to receive properties;
     2. shouldComponentUpdate(nextProps, nextState)-> bool -Lets you optimize
        the component's redering by determing when to update and when not to,.
-    3. componentDidUpdate(prevProps, prevState) - Happnes after teh component
+    3. componentDidUpdate(prevProps, prevState) - Happens after the component
        update.
 - Unmounting:
     1. componentWillUnmount function()- lets you unbind and detach any event
@@ -222,23 +222,31 @@ Updating state:
 shouldComponentUpdate=>componentWillUpdate=>render=>componentdidUpdate
 updating using: componentWillUpdate=>render=>componentDidUpdate
 
+If using React.createClass(),
+getDefaultProps()->getInitialState()=>componentWillMount->render->componentDidMount->componentWillUnmount
+componentWillMount is invoked before the DOM is rendered and can be used to
+initialize thrid-party libraries, start animation, request data, or perform any
+additional setup that may be required before a component is rendered. It is
+possible invoke setState from this method to change the component before the
+component is initially rendered.
+
 Avoid using this.forceUpdate().
 Pure functions are the cornerstone of `functional programming`, which minimizes
 state as much as possible.
 
 To implement an event, define them on a class as methods.
 events == event handler == method.
-componentDidMount(): a place to put code to integrae with others or xhr
+componentDidMount(): a place to put code to integrate with others or xhr
 request, cuz at this point the component's element is in the real DOM and u get
 access to all its elements.
 
 You can invoke setState() in componentWillMount. render() will get the new
 values, if any, and there will be no extra rendering.
-The componentDidMount() method o child components is invoked before that of
+The componentDidMount() method on child components is invoked before that of
 parent components.
 
 Fetch API: fetch(url).then().then()
-Setting your initial values will help you avoid lotsof pain later!
+Setting your initial values will help you avoid lots of pain later!
 
 ComponentWillReceiveProps(newProps) is invoked each time there's a
 rerendering(of a parent structure or a call), regardless of property-value
@@ -282,7 +290,7 @@ event.target.value to get the txt of an input field.
 The synthetic event is nullified once the event hander is done.
 
 Passing event handlers as properties
-Dumb and smart components are called presentatinal and container components.
+Dumb and smart components are called presentational and container components.
 Smart/container components describe how things work without DOM elements, have
 states, use higher-order component patterns, and connect to data sources.
 States are in container component and dum component is jut a view.

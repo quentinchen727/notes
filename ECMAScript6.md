@@ -7,8 +7,16 @@
         let declaration: let value = "blue"  // value will not be hoisted.
         "let" can not redeclare a variable in the same scope.
     - const Declarations: const a = 4; it is block level declaration and not hoisted;
-        it cannnot redeclarate variables.
+        it cannnot redeclare variables.
     - Object Declarations with const: prevents modifications of the binding, not of the value.
+        e.g. MY_OBJECT = {'a': 'foo'}. Illegal to reassign it to a different
+        object, but it is ok to change the value of the key.
+        Use Object.freeze() to make object immutable.
+        Object.freeze() returns the same object, not creating a new frozen
+        copy. However, Accessor properties(getters and setters) still work the same.
+        Object values can still be changed, i.e., freeze is shallow.
+        The object being frozen is immutable, but not necessarli constant.
+        Object.assign only does shallow copy.
     - The Temporal Dead Zone: let and const bindings are not accessible before their declarations.
         TDZ: in the scope and before the blocking binding happens. Access a block level variable in
             TDZ throws an error.
@@ -35,7 +43,7 @@
                 const ncz = "hi";
                 'ncz' in windows; //false
         - Emerging best practices for block bindings:
-            Use const by defualt, and only use let when you know a vraible's value to change.'
+            Use const by default, and only use let when you know a variable's value to change.
 
 ## 2. Strings and regular expressions
     - character encoding:
@@ -62,8 +70,10 @@
                 }
             }
     - Other string changes:
-        - startsWith, endsWith, includes(); they all take a string. In contrast, indexOf() and lastIndexOf() convert
-            a regular expression argument into a string and then search for that string.
+        - startsWith, endsWith, includes(); they all take a string. In
+        - contrast, indexOf() and lastIndexOf() convert
+            a regular expression argument into a string and then search for
+            that string.
         - repeat(): equal to str * number in Python;
    - Other regular expression changes:
         - y Flag: sticky. The global pattern and stick one will keep track of the last match.
@@ -88,60 +98,94 @@
         - Default Parameter values in ES6:
             function makeRequest(url, timeout = 2000) {}
             even function makeRe(url, timeout=2000, callback)
-            call a function : makeRe("foo/", undefined, callback); // can even set defualt value in the middle parameters.
-            call a function : makeRe("foo/", null, callback); // null is considered a valid value in default setting.
+            call a function : makeRe("foo/", undefined, callback); // can even
+            set default value in the middle parameters.  
+            call a function :
+            makeRe("foo/", null, callback); // null is considered a valid value
+            in default setting.
         - Default parameter values affect the arguments object:
-            in ES5 no strict mode, change to parameters always reflects on arguments array, while not in strict mode.
-            In ES6, arguments always reflect initial call state and default value will not be passed to arguments array.
+            in ES5 no strict mode, change to parameters always reflects on
+            arguments array, while not in strict mode.  In ES6, arguments
+            always reflect initial call state and default value will not be
+            passed to arguments array.
         - Default parameter Expressions:
-            function getValeu() {}
-            function add ( first, second = getValue())  // it can even be an expression in default setting and be evaluated only when it is called.
-            function add(first, second=first); function add(first, second=getValue(first)){}  // can use previous paramaters in the following ones or even in functions.
-        - Default parameter TDZ: functional parameters have their own scope and their own TDZ that is separate from the function body scope.
+            function getValue() {}
+            function add ( first, second = getValue())  // it can even be an
+            expression in default setting and be evaluated only when it is
+            called.  function add(first, second=first); function add(first,
+            second=getValue(first)){}  // can use previous paramaters in the
+            following ones or even in functions.
+        - Default parameter TDZ: functional parameters have their own scope and
+        - their own TDZ that is separate from the function body scope.
    ### Unamed parameters:
-        Javascript donot limit the number of parameter that can be passed to the number of the named paramaters defined. You can pass more or fewer.
+        Javascript donot limit the number of parameter that can be passed to
+        the number of the named paramaters defined. You can pass more or fewer.
         - Rest parameters:
-            function pick(object, ...keys) {} // keys becomes an array containing the rest of the parameters. And it doesnot affect a function's length property,
-                which indicates the number of named parameters for the function.
+            function pick(object, ...keys) {} // keys becomes an array
+            containing the rest of the parameters. And it doesnot affect a
+            function's length property, which indicates the number of named
+            parameters for the function.
             Two restrictions:
                 - only one rest parameter
                 - the rest parameter must be last.
                 - cannot be used in an object literal setter.
-            The arguments object always correctly reflects the parameters that were passed into a function call regardless of rest parameter usage.
-    ### Increased capabilities of the function constructor:
-        var add = new Function("first", "second", "return first + second"); // parameters for the function and function body
-        ES6 augments the capabilities of the Function constructor to allow default parameters and rest parameters.
+            The arguments object always correctly reflects the parameters that
+            were passed into a function call regardless of rest parameter
+            usage.  ### Increased capabilities of the function constructor:
+        var add = new Function("first", "second", "return first + second"); //
+        parameters for the function and function body ES6 augments the
+        capabilities of the Function constructor to allow default parameters
+        and rest parameters.
     ### The spread operator:
         ES5: Math.max.apply(Math, valueArray)
         ES6: Math.max(...values); // equal to *array unpacking in python
-             Mix and match the spread operator with other arguments as well. e.g., Math.max(...valueArray, 0);
+             Mix and match the spread operator with other arguments as well.
+             e.g., Math.max(...valueArray, 0);
+             with [...array], {...object}
     ### The name property:
         - function.name property
-        - clarifying the dual purpose of functions: callable with or without new. When used with new, this value inside a function is a new object
-            and that object is returned.
-            Javascript has two different internal-only methods for functions: [[Call]] and [[Constructor]]. when called without new, the [[Call]] is called.
-            When called with new, [[Construct]] is called and a new object is created and this is set to this object instance..
-            Functions that has a [[Construct]] are called constructors.
+        - clarifying the dual purpose of functions: callable with or without
+        - new. When used with new, `this` value inside a function is a new object
+            and that object is returned.  Javascript has two different
+            internal-only methods for functions: [[Call]] and [[Constructor]].
+            when called without new, the [[Call]] is called.  When called with
+            new, [[Construct]] is called and a new object is created and this
+            is set to this object instance..  Functions that has a
+            [[Construct]] are called constructors.
         - Determing how a function was called in ES5:
-                function Person(name) { if (this instaceof Person){} else {throw new Error("You must use new with Person")}}
-                To the function, there's no way to distinguish being called with Person.call/apply() with a Person instance from being called with new.
+                function Person(name) { if (this instanceof Person){} else
+                {throw new Error("You must use new with Person")}} To the
+                function, there's no way to distinguish being called with
+                Person.call/apply() with a Person instance from being called
+                with new.
         - The new.target metaProperty
-            function Person(name) { if (typeof new.target !== "Person")}  // If [[Call]] is executed, new.target is undefined. And it can be used with a specified constructor.
+            function Person(name) { if (typeof new.target !== "Person")}  // If
+            [[Call]] is executed, new.target is undefined. And it can be used
+            with a specified constructor.
         - Block-level functions: not allowed in ES5 strict mode.
-            Block-level functions are hoisted to the top of the block in which they are defined, but in non-strict mode, they are hoisted all they way to
-            the containing function or global environment.
-            Use let in function expression will prevent the block-level function hoisting.
+            Block-level functions are hoisted to the top of the block in which
+            they are defined, but in non-strict mode, they are hoisted all they
+            way to the containing function or global environment.  Use let in
+            function expression will prevent the block-level function hoisting.
    ### Arrow function:
-        - No this, super, arguments and new.target bindings. They are definde by the closest containing non-arrow function.
+        - No this, super, arguments and new.target bindings. They are defined
+          by the closest containing non-arrow function.
         - Cannot be called with new. it does not have a [[Construct]]
         - No prototype property.
         - Can't change this
         - No arguments object.
         - No duplicate named parameters.
-        - Syntax: let sum = value => value; let sum = (num1, num2) => num1 + num2; getName = () => "Qin"; let sum = (num1, num2) => { return num1 + num2;}
+        - Syntax: let sum = value => value; let sum = (num1, num2) => num1 +
+         num2; getName = () => "Qin"; let sum = (num1, num2) => { return num1
+         + num2;}
         - IIFE: let person = ((name) => { return { getName: function () { return name;}}})("Qin");
-        - No this binding: the value of this can change inside a single function depending on the contet in which the funciton is called. It can be fixed using bind(this)
-            An array function has no this binding, and it will use the containing no array function's this. e.g. document.addEventListener("click", event => this.dosomething(event.type))
+        - No this binding: the value of this can change inside a single
+         function depending on the contet in which the funciton is called. It
+         can be fixed using bind(this)
+            An array function has no this binding, and it will use the
+            containing no array function's this. e.g.
+            document.addEventListener("click", event =>
+            this.dosomething(event.type))
         - Array functions and arrays: values.sort((a,b) => a - b);
         - arguments access: prototype chaining
     ### Tail call optimization: Strict mode
@@ -165,17 +209,20 @@
         - Ordinary objects: have all the default internal behavior for objects.
         - Exotic objects: have internal behavior that differs from the default in some way.
         - Standard objects: Defined by ES6, such as Array, Date and so on.
-        - Build-in Objects: Present in a JS execution environment when a script begins to execute. All standard objects are built-in objects.
+        - Build-in Objects: Present in a JS execution environment when a script
+          begins to execute. All standard objects are built-in objects.
     - Property initializer shorthand: return { name, age };
     - Concise methods: var person = { name: "Qin", sayName() { console.log(this.name);}};
-    - Computed property names: property name containing a space can not be referenced by using dot notation. Square brackets allow variables and expression to used inside it.
+    - Computed property names: property name containing a space can not be
+      referenced by using dot notation. Square brackets allow variables and
+      expression to used inside it.
             var person = { firstname: 'Q', [lastname]: 'C'}
     - New methods:
         - Object.is() works the same as the === operator. but +0 and -0 is not equal, and NaN and NaN are equal
         - Object.assign() might have other names for the same functionality, such as extend() and mix().
             let receivers = Object.assign(supplier, supplier,...)
             Object.assign() doesn't create accessor properties, but only create data propertyies.
-    - Duplicate Object literal property allowed: only the last one counts.
+    - Duplicate Object literal property allowed: `only the last one counts`.
     - Own property enumeration order: affects how properties are returned using Object.getOwnPropertyNames() and Reflect.ownKeys and Object.assign(), but not for in loop and Object.keys(), JSON.stringify()
         1. all numeric keys in ascending order.
         2. all string keys in the order in which they were added to the object.
@@ -202,7 +249,8 @@
     - Assigning to different local vars: let {type: localType, name: localName="default"} = node;
     - Nested object destructuring: let {loc: {start: localStart}} = node;
 
-    - Array destructuring: let [first, second] = [1,2,3]; let [,,third] = [1,2,3] // initializer is required when using it with var, let or const.
+    - Array destructuring: let [first, second] = [1,2,3]; let [,,third] =
+      [1,2,3] // initializer is required when using it with var, let or const.
     - Destructuring assignment: first = 1, second =2; [first, second] = [1,2,3]
         [a, b] = [b, a]  // swap
         [a, b=1] = [2]  // default
@@ -397,59 +445,82 @@
 
 
 ## 11. Promises and asynchronous programming
-    - Promises are another option for asynchronous programming, and they work like futures and deferreds do in other languages.
-        Javascript engines are built on the concept of a single-threaded event loop to avoid race condition.
-        Javascript engines can execute only one piece of code at a time, so they nee dto keep track of code that is meant to run in a job queue.
-        A job is enqued into and dequeued from job queue by event loop. The event loop is a process inside the Javascript engine that monitors code
-        execution and manages the job queue.
+    - Promises are another option for asynchronous programming, and they work
+    - like futures and deferreds do in other languages.
+        Javascript engines are built on the concept of a single-threaded event
+        loop to avoid race condition.  Javascript engines can execute only one
+        piece of code at a time, so they need to keep track of code that is
+        meant to run in a job queue.  A job is enqueued into and dequeued from
+        job queue by event loop. The event loop is a process inside the
+        Javascript engine that monitors code execution and manages the job
+        queue.
     - Event Model:
-        click/onclick is an event and it adds a new job/event handler to the back of the job queue. And it won't be executed until all other jobs ahead of it are complete.
-        Events work well for simple interactions, but chaining multiple seperate asynchronous calls together is more complicated.
+        click/onclick is an event and it adds a new job/event handler to the
+        back of the job queue. And it won't be executed until all other jobs
+        ahead of it are complete.  Events work well for simple interactions,
+        but chaining multiple seperate asynchronous calls together is more
+        complicated.
     - Callback Pattern:
-        Asynchrons_fnc_call(callback(err, data){}); it adds a new job to the end of the job queue with the callback function and its arguemtns. That job executes
-        upon completion of all other jobs ahead of it. callback hell: nest too many callbacks.
+        Asynchrons_fnc_call(callback(err, data){}); it adds a new job to the
+        end of the job queue with the callback function and its arguemtns. That
+        job executes upon completion of all other jobs ahead of it. callback
+        hell: nest too many callbacks.
     - Promise basics:
         A promise ia a placeholder for the result of an asynchronous operation.
         let promise = readFile("example.txt"); //pending state
         - The promise life cycle:
-            pending (unsettled); once the asynchronous operation completes, the promise is considered settled and enters Fufilled or Rejected.
+            pending (unsettled); once the asynchronous operation completes, the
+            promise is considered settled and enters Fufilled or Rejected.
             Interal inaccessible [[PromiseState]] property.
-            Promise.then(successCallback, failureCallback)
-            Any object that implements then() method is called thenable. All promises are thenable, but not vice versa.
-            Promise.then(null, function(err)) === Promise.catch(function (err))
-            Advantage: events tend not to fire when there's an error, and in callbacks you must always remember to check the error argument.
-            Always attach a rejection handler, even if the handler just logs the failure.
-            Note: A fulfillment or rejection handler will still be executed even if it is aded to the job queue after the promise is already settled.
+            Promise.then(successCallback, failureCallback) Any object that
+            implements then() method is called thenable. All promises are
+            thenable, but not vice versa.  Promise.then(null, function(err))
+            === Promise.catch(function (err)) Advantage: events tend not to
+            fire when there's an error, and in callbacks you must always
+            remember to check the error argument.  Always attach a rejection
+            handler, even if the handler just logs the failure.  Note: A
+            fulfillment or rejection handler will still be executed even if it
+            is aded to the job queue after the promise is already settled.
     - Creating Unsettled Promises:
-        new Promise(executor(resolve, reject){})
-        Executor runs immediately when new Promise is called. When either resolve() or reject() is called inside the executor, a job is added to the job queue to resolve
-            the promise, called job scheduling. Calling resolve triggers an asynchronous operations. Functions passed to then() and catch() are executed asynchronously,
-            because these are also added to the job queue.
+        new Promise(executor(resolve, reject){}) Executor runs immediately when
+        new Promise is called. When either resolve() or reject() is called
+        inside the executor, a job is added to the job queue to resolve the
+        promise, called job scheduling. Calling resolve triggers an
+        asynchronous operations. Functions passed to then() and catch() are
+        executed asynchronously, because these are also added to the job queue.
     - Creating settled promises
-        let promise = Promise.resolve(42)  // create a resolved promise
-        let promise = Promise.reject(1)  // create a rejected promise
+        let promise = Promise.resolve(42)  // create a resolved promise let
+        promise = Promise.reject(1)  // create a rejected promise
         promise.then(callback); promise.catch(callback);
     - Non-promise thenables:
-        let thenable = {
-            then: function (resolve, reject)
-                { resolve(45); }
-        }
-        let p1 = Promise.resolve(thenable); // convert thenable into a fulfilled or rejected promise.
-        p1.then(callback);
-    - Executor erros: the promise's rejection handler will catch an error thrown inside an executor.
-    - Rejection handling: node.js and browser
-    - Chaining promises:Promise.then().then(); promise.catch(throw new Error()).catch();
-        Awalys have a rejection handler at the end of a promise chain to ensure that you can properly handle any errors that may occur.
+        let thenable = { then: function (resolve, reject) { resolve(45); } }
+        let p1 = Promise.resolve(thenable); // convert thenable into a
+        fulfilled or rejected promise.  p1.then(callback);
+    - Executor erros: the promise's rejection handler will catch an error
+    - thrown inside an executor.  Rejection handling: node.js and browser
+    - Chaining promises:Promise.then().then(); promise.catch(throw new
+    - Error()).catch();
+        Awalys have a rejection handler at the end of a promise chain to ensure
+        that you can properly handle any errors that may occur.
     - Returning values in promise chains:
         p.then(function (value) { return value *2}).then(function (value){});
-        or use catch(function (value) { return value + 2;}).then(function (value){}) to chain; the failure of one promise can allow the recovery of the entire chain if necessary.
+        or use catch(function (value) { return value + 2;}).then(function
+        (value){}) to chain; the failure of one promise can allow the recovery
+        of the entire chain if necessary.
     - Returning Promise in Promise Chains:
-       p1.then(function (value){ let p2 = new Promise(function (resolve, reject){}); return p2}).then(function (value){});
+       p1.then(function (value){ let p2 = new Promise(function (resolve,
+       reject){}); return p2}).then(function (value){});
     - Responding to multiple promises:
-        Promise.all(iterable)  // if all is done successfully, an array of result is returned; otherwise,just the first one failed will return a result.
-        Promise.race(iterable)  // depends which one is finished first.
-    - support inheritance
-    - promise-based asynchronous task running
+        Promise.all(iterable)  // if all is done successfully, an array of
+        result is returned; otherwise,just the first one failed will return a
+        result.  Promise.race(iterable)  // depends which one is finished
+        first.
+    - support inheritance promise-based asynchronous task running
+    - async/await:
+        async makes it always return a promise, and allow to use await in it.
+        Aync function could also return a wrapped non-promise object.
+        `await` keywords before a promise makes JS wait until that promise
+        settles. It can catch error or get return result.
 
 
 ## 12. proxies and the reflection api
@@ -490,3 +561,59 @@
     CORS: cross origin resource sharing headers
     browser import path: /, ./, ../, url format
     The defer attr is optional for loading scripts files but is always applied for loading module files. The module begins downloading asap but doesn't execute untiil after the doument has been completely downloaded.
+
+# An Overview of What's new in ES6
+1. New integer literals:
+    oxFF: hexademical; 0b11: binary; 0o10: octal
+
+caveat: JS is a weak and dynamic type language, vs strong and static: 1 + '1' = '11'
+In JS, the value NaN is considered a type of number.
+
+2. Number properties:
+Number.EPISLON for comparing flaoting points with a tolerance for rounding
+errors.
+Number.isInteger
+Number.isSafeInteger(number), Number.MIN_SAFE_INTEGER, MAX_SAFE_INTEGER (safe: 
+within the signed 53 bit range in which there is no precision loss.)
+Number.isNaN doesn't corece its argument to a number, and only returns true for
+NaN.
+
+3. Math
+Math.sign
+Math.trunc
+Math.log10
+Math.hypot
+
+4. String
+startsWith, endsWith, includes, repeat
+template literal: `Hello {$first }` and multiple lines
+
+5. Symbols
+every time calling Symbol('') factory function, a new symbol is created.
+U can't coerce symbols to strings.
+
+6. Object/Array desctructing
+const {first: f, second: s} = foo; // get two memebers and change their names
+const [a, b] = foo; // get the first two
+const [a] = foo2; // get the first one
+const [,,c] = foo3; //get the third one.
+
+7. new object literal defititions:
+{[propKey] : true};
+
+8. Object literal enhancement
+var fun = { name, title };
+We use `this` to access the object keys;
+When defining object methods, it is no longer necessary to use the `function`
+keyword.
+const skier = { name,
+                sound,
+                powderYell() {blabla...}
+                }
+Object literal enhancement allows us to pull global variables into objects and
+reduce typing by making the `function` keyword unnecessary.
+
+9. The Spread operator
+var tahoe = [...peaks, ...canyons];
+var [last] = [...tahoe].reverse(); // create a copy of tahoe, and grab the last
+one. Array.reverse mutates the array.
